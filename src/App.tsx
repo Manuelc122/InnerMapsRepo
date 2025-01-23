@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './state-management/AuthContext';
 import { LandingPage } from './views/LandingPage';
 import { Dashboard } from './views/Dashboard';
-import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './state-management/AuthContext';
 import { AnalysisPage } from './views/AnalysisPage';
 import { ChatPage } from './views/ChatPage';
