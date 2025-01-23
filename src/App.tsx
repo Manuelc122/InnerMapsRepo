@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './state-management/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './state-management/AuthContext';
 import { AnalysisPage } from './pages/AnalysisPage';
 import { ChatPage } from './pages/ChatPage';
 import { AppLayout } from './components/Layout/AppLayout';
