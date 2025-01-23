@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat&family=Dancing+Script&family=Homemade+Apple&family=Indie+Flower&family=Kalam&family=La+Belle+Aurore&family=Mali&family=Marck+Script&family=Nanum+Pen+Script&family=Nothing+You+Could+Do&family=Patrick+Hand&family=Permanent+Marker&family=Reenie+Beanie&family=Rock+Salt&family=Satisfy&family=Shadows+Into+Light&family=Short+Stack&family=Sriracha&family=Sue+Ellen+Francisco&family=Waiting+for+the+Sunrise&display=swap');
+
+/* Classic Handwriting */
+.font-belle-aurore { font-family: 'La Belle Aurore', cursive; }
+.font-homemade-apple { font-family: 'Homemade Apple', cursive; }
+.font-dancing-script { font-family: 'Dancing Script', cursive; }
+.font-nothing-you-could-do { font-family: 'Nothing You Could Do', cursive; }
+.font-marck-script { font-family: 'Marck Script', cursive; }
+
+/* Casual & Playful */
+.font-patrick-hand { font-family: 'Patrick Hand', cursive; }
+.font-indie-flower { font-family: 'Indie Flower', cursive; }
+.font-architects-daughter { font-family: 'Architects Daughter', cursive; }
+.font-short-stack { font-family: 'Short Stack', cursive; }
+.font-mali { font-family: 'Mali', cursive; }
+
+/* Flowing & Elegant */
+.font-satisfy { font-family: 'Satisfy', cursive; }
+.font-caveat { font-family: 'Caveat', cursive; }
+.font-nanum-pen { font-family: 'Nanum Pen Script', cursive; }
+.font-sue-ellen { font-family: 'Sue Ellen Francisco', cursive; }
+.font-waiting-sunrise { font-family: 'Waiting for the Sunrise', cursive; }
+
+/* Bold & Expressive */
+.font-permanent-marker { font-family: 'Permanent Marker', cursive; }
+.font-shadows-light { font-family: 'Shadows Into Light', cursive; }
+.font-kalam { font-family: 'Kalam', cursive; }
+.font-rock-salt { font-family: 'Rock Salt', cursive; }
+.font-sriracha { font-family: 'Sriracha', cursive; }
+.font-reenie-beanie { font-family: 'Reenie Beanie', cursive; }
