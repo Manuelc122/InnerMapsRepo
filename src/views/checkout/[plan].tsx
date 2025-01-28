@@ -7,22 +7,22 @@ import { createCheckoutSession } from '../../utils/stripe';
 type PlanType = 'monthly' | 'yearly';
 
 export default function CheckoutPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
+  const { plan: planParam } = useParams<{ plan: PlanType }>();
   const { user, loading: authLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const planParam = (router.query?.plan || '') as PlanType;
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      navigate('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const initCheckout = async () => {
       if (!planParam || !['monthly', 'yearly'].includes(planParam)) {
-        router.push('/pricing');
+        navigate('/pricing');
         return;
       }
 
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
     if (user && planParam) {
       initCheckout();
     }
-  }, [user, planParam, router]);
+  }, [user, planParam, navigate]);
 
   if (authLoading || !user) {
     return (
@@ -70,7 +70,7 @@ export default function CheckoutPage() {
                 {error}
               </div>
               <button
-                onClick={() => router.push('/pricing')}
+                onClick={() => navigate('/pricing')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Return to Pricing
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <h3 className="font-medium text-gray-900">{selectedPlan.name}</h3>
                     <p className="text-2xl font-bold text-blue-600 mt-2">
-                      ${selectedPlan.priceInCents / 100}{selectedPlan.period}
+                      ${selectedPlan.priceInCents / 100}/{selectedPlan.period}
                     </p>
                   </div>
                   <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
