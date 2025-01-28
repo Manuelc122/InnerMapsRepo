@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Settings, Menu, X } from 'lucide-react';
-import { Logo } from '../ui/Logo';
-import { useAuth } from '../../contexts/AuthContext';
+import { Logo } from '../shared/Logo';
+import { useAuth } from '../../state-management/AuthContext';
 
 const navigation = [
   { name: 'Journal', href: '/journal' },
