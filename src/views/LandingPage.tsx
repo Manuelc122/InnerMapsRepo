@@ -1,11 +1,11 @@
 import React from 'react';
-import { HeroSection } from '../components/Landing/HeroSection';
-import { FeaturesSection } from '../components/Landing/FeaturesSection';
-import { DemoSection } from '../components/Landing/DemoSection';
-import { PricingSection } from '../components/Pricing/PricingSection';
-import { AboutSection } from '../components/Landing/AboutSection';
-import { ScrollToTop } from '../components/ui/ScrollToTop';
-import { Footer } from '../components/Landing/Footer';
+import { HeroSection } from '../components/marketing/HeroSection';
+import { FeaturesSection } from '../components/marketing/FeaturesSection';
+import { DemoSection } from '../components/marketing/DemoSection';
+import { PricingSection } from '../components/subscription/PricingSection';
+import { AboutSection } from '../components/marketing/AboutSection';
+import { ScrollToTop } from '../components/shared/ScrollToTop';
+import { Footer } from '../components/marketing/Footer';
 
 export function LandingPage() {
   return (
