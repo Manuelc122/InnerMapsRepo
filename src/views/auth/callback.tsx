@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../utils/supabaseClient';
 
 const getBasePath = () => {
   const isDevelopment = import.meta.env.DEV;
