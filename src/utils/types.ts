@@ -10,6 +10,12 @@ export interface SpeechRecognition extends EventTarget {
   abort: () => void;
 }
 
+export interface JournalEntry {
+  id: string;
+  content: string;
+  timestamp: Date;
+}
+
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;

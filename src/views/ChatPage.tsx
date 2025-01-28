@@ -5,14 +5,14 @@ import {
   generateChatResponse,
   type ChatMessage,
   deleteMessage
-} from '../lib/chat';
+} from '../utils/chat';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { 
   Sparkles, Send, Loader2, ChevronDown, Trash2, 
   Smile, Lightbulb, Heart, Target, Waves, ArrowRight
 } from 'lucide-react';
-import { getJournalEntries } from '../lib/journal';
-import type { JournalEntry } from '../types';
+import { getJournalEntries } from '../utils/journal';
+import type { JournalEntry } from '../utils/types';
 
 export function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
