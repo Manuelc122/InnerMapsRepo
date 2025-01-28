@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../utils/supabaseClient';
 import type { User } from '@supabase/supabase-js';
 
 const getRedirectUrl = (plan?: 'monthly' | 'yearly') => {
