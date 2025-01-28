@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '../../contexts/AuthContext';
-import { SUBSCRIPTION_PLANS } from '../../lib/plans';
-import { createCheckoutSession } from '../../lib/stripe';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../state-management/AuthContext';
+import { SUBSCRIPTION_PLANS } from '../../utils/plans';
+import { createCheckoutSession } from '../../utils/stripe';
 
 type PlanType = 'monthly' | 'yearly';
 
