@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail } from 'lucide-react';
-import { Logo } from '../ui/Logo';
+import { Logo } from '../shared/Logo';
 
 export function Footer() {
   return (
