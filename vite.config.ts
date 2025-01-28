@@ -12,13 +12,9 @@ function apiRoutes() {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         if (req.url?.startsWith('/api/')) {
           try {
-            console.log('Loading API route for:', req.url);
-            
-            // Convert URL to filesystem path
             const urlPath = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
             const routePath = urlPath.replace(/^\/api/, '');
             
-            // Try both .ts and .js extensions
             const possiblePaths = [
               path.join(process.cwd(), 'src/pages/api', routePath + '.ts'),
               path.join(process.cwd(), 'src/pages/api', routePath + '.js'),
@@ -29,39 +25,21 @@ function apiRoutes() {
             let module;
             for (const modulePath of possiblePaths) {
               try {
-                console.log('Trying to load:', modulePath);
                 module = await server.ssrLoadModule(modulePath);
-                console.log('Successfully loaded:', modulePath);
                 break;
               } catch (e) {
-                console.log('Failed to load:', modulePath);
                 continue;
               }
             }
 
             if (!module?.default) {
-              console.error('No API route found for:', req.url);
               res.statusCode = 404;
-              res.end(JSON.stringify({ 
-                error: 'API route not found',
-                details: `No handler found for ${req.url}`
-              }));
+              res.end(JSON.stringify({ error: 'API route not found' }));
               return;
             }
 
-            console.log('Executing API handler for:', req.url);
-            const handler = module.default;
-            await handler(req, res);
+            await module.default(req, res);
           } catch (error) {
-            console.error('API route error:', {
-              url: req.url,
-              error: error instanceof Error ? {
-                message: error.message,
-                stack: error.stack,
-                name: error.name
-              } : String(error)
-            });
-            
             if (!res.headersSent) {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
@@ -85,7 +63,25 @@ export default defineConfig({
   server: {
     port: 5174,
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@heroicons/react', 'framer-motion'],
+        },
+      },
+    },
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['react', 'react-dom', 'react-router-dom'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
   },
 });

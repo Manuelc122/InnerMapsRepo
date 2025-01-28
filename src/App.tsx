@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './state-management/AuthContext';
 import { LandingPage } from './views/LandingPage';
 import { Dashboard } from './views/Dashboard';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
@@ -67,9 +66,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <AppRoutes />
     </Router>
   );
 }
