@@ -1,16 +1,19 @@
-import { AppProps } from 'next/app';
-import { AuthProvider } from '../lib/auth/AuthContext';
-import { SubscriptionProvider } from '../lib/subscriptions/SubscriptionContext';
+import React from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { AuthProvider } from '../state-management/AuthContext';
+import { SubscriptionProvider } from '../utils/subscriptions/SubscriptionContext';
 import '../styles/globals.css';
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <SubscriptionProvider>
-        <Component {...pageProps} />
-      </SubscriptionProvider>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <SubscriptionProvider>
+          {children}
+        </SubscriptionProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
-export default MyApp; 
+export default App; 

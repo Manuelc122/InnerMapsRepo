@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signIn, signUp } from '../lib/auth';
+import { signIn, signUp } from '../../utils/auth';
 
 export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);

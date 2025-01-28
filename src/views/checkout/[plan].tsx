@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../state-management/AuthContext';
 import { SUBSCRIPTION_PLANS } from '../../utils/plans';
-import { createCheckoutSession } from '../../utils/stripe';
 
 type PlanType = 'monthly' | 'yearly';
 
@@ -10,40 +9,8 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { plan: planParam } = useParams<{ plan: PlanType }>();
   const { user, loading: authLoading } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/login');
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    const initCheckout = async () => {
-      if (!planParam || !['monthly', 'yearly'].includes(planParam)) {
-        navigate('/pricing');
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const priceId = planParam === 'monthly' ? 'price_monthly' : 'price_yearly';
-        await createCheckoutSession(priceId);
-      } catch (err) {
-        console.error('Checkout error:', err);
-        setError('Failed to initialize checkout. Please try again.');
-        setIsLoading(false);
-      }
-    };
-
-    if (user && planParam) {
-      initCheckout();
-    }
-  }, [user, planParam, navigate]);
-
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="text-center">
@@ -54,20 +21,40 @@ export default function CheckoutPage() {
     );
   }
 
-  const selectedPlan = planParam && SUBSCRIPTION_PLANS[planParam];
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
+
+  if (!planParam || !['monthly', 'yearly'].includes(planParam)) {
+    navigate('/pricing');
+    return null;
+  }
+
+  const selectedPlan = SUBSCRIPTION_PLANS[planParam];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            {isLoading ? 'Preparing Checkout...' : 'Checkout'}
+            Plan Details
           </h1>
-
-          {error ? (
-            <div className="text-center">
-              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-                {error}
+          <div className="text-center">
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-900">{selectedPlan.name}</h3>
+                <p className="text-2xl font-bold text-blue-600 mt-2">
+                  ${selectedPlan.priceInCents / 100}/{selectedPlan.period}
+                </p>
+                <div className="mt-4">
+                  <h4 className="font-medium text-gray-700 mb-2">Features:</h4>
+                  <ul className="space-y-2">
+                    {selectedPlan.features.map((feature, index) => (
+                      <li key={index} className="text-gray-600">{feature}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
               <button
                 onClick={() => navigate('/pricing')}
@@ -76,28 +63,7 @@ export default function CheckoutPage() {
                 Return to Pricing
               </button>
             </div>
-          ) : (
-            <div className="text-center">
-              {selectedPlan ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-900">{selectedPlan.name}</h3>
-                    <p className="text-2xl font-bold text-blue-600 mt-2">
-                      ${selectedPlan.priceInCents / 100}/{selectedPlan.period}
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-gray-600">
-                    Please wait while we prepare your checkout session...
-                  </p>
-                </div>
-              ) : (
-                <div className="text-gray-600">
-                  Invalid plan selected. Please return to pricing page.
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

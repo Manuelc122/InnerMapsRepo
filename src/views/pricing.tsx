@@ -1,5 +1,5 @@
-import { PricingCard } from '../components/PricingCard';
-import { SUBSCRIPTION_PLANS } from '../lib/plans';
+import { PricingCard } from '../components/subscription/PricingCard';
+import { SUBSCRIPTION_PLANS } from '../utils/plans';
 
 export default function PricingPage() {
   return (

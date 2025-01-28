@@ -7,6 +7,7 @@ import { useAuth } from './state-management/AuthContext';
 import { AnalysisPage } from './views/AnalysisPage';
 import { ChatPage } from './views/ChatPage';
 import { AppLayout } from './components/Layout/AppLayout';
+import { HealthCheck } from './views/HealthCheck';
 import AuthCallback from './views/auth/callback';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/health" element={<HealthCheck />} />
       <Route path="/" element={user ? <Navigate to="/journal" /> : <LandingPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
