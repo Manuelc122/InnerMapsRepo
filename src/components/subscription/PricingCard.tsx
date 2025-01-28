@@ -1,15 +1,16 @@
-import { useRouter } from 'next/router';
-import { useAuth } from '../contexts/AuthContext';
-import type { SubscriptionPlan } from '../lib/plans';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../state-management/AuthContext';
+import type { SubscriptionPlan } from '../../utils/plans';
 
 interface PricingCardProps {
   name: string;
   price: string;
   period: string;
   description: string;
-  features: string[];
+  features: readonly string[];
   buttonText: string;
   buttonVariant: 'outline' | 'solid';
+  plan: SubscriptionPlan;
   badge?: string;
 }
 
@@ -21,8 +22,11 @@ export function PricingCard({
   features,
   buttonText,
   buttonVariant,
+  plan,
   badge
 }: PricingCardProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   return (
     <div className="relative flex flex-col rounded-2xl border border-gray-200 p-8 shadow-sm">
       {badge && (

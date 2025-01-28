@@ -1,6 +1,18 @@
 export type SubscriptionPlan = 'monthly' | 'yearly';
+export type ButtonVariant = 'outline' | 'solid';
 
-export const SUBSCRIPTION_PLANS = {
+interface PlanDetails {
+  readonly name: string;
+  readonly priceInCents: number;
+  readonly period: string;
+  readonly description: string;
+  readonly features: readonly string[];
+  readonly buttonText: string;
+  readonly buttonVariant: ButtonVariant;
+  readonly badge?: string;
+}
+
+export const SUBSCRIPTION_PLANS: Readonly<Record<SubscriptionPlan, PlanDetails>> = {
   monthly: {
     name: 'Monthly Plan',
     priceInCents: 1000000, // $10 USD in cents
@@ -11,7 +23,7 @@ export const SUBSCRIPTION_PLANS = {
       'Advanced AI insights',
       'Voice journaling',
       'AI coaching conversations'
-    ],
+    ] as const,
     buttonText: 'Start Monthly Plan',
     buttonVariant: 'outline'
   },
@@ -26,10 +38,10 @@ export const SUBSCRIPTION_PLANS = {
       'Early access to new features',
       'Personalized insights',
       '17% savings vs monthly'
-    ],
+    ] as const,
     buttonText: 'Start Yearly Plan',
     buttonVariant: 'solid',
-    badge: 'Best Value'
+    badge: 'Most Popular'
   }
 } as const;
 

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../state-management/AuthContext';
 import { Mic, Send, Settings, Loader2, Sparkles, Menu, X, Trash2, BookOpen, Flame, Search } from 'lucide-react';
-import { Logo } from '../components/ui/Logo';
-import { analyzeJournalEntry, saveJournalEntry, deleteJournalEntry } from '../lib/deepseek';
+import { Logo } from '../components/shared/Logo';
+import { analyzeJournalContent, saveJournalEntry, deleteJournalEntry } from '../utils/deepseek';
 import { Link, useLocation } from 'react-router-dom';
 import { VoiceRecorder } from '../components/VoiceRecorder/VoiceRecorder';
-import { supabase } from '../lib/supabase';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { saveMood, getMoodHistory, type Mood } from '../lib/moods';
+import { supabase } from '../utils/supabaseClient';
+import { ConfirmDialog } from '../components/shared/ConfirmDialog';
+import { saveMood, getMoodHistory, type Mood } from '../utils/moods';
 
 type Tab = 'analysis' | 'chat';
+type MoodFilterType = 'all' | 'positive' | 'challenging' | 'energy';
 
-const WRITING_PROMPTS = [
+const WRITING_PROMPTS: readonly string[] = [
   // Daily Reflection
   "Today, I noticed that...",
   "The most meaningful part of my day was...",
@@ -116,21 +117,21 @@ const WRITING_PROMPTS = [
   "When I listen deeply, I hear...",
   "Today's experience taught me...",
   "I'm learning to integrate..."
-];
+] as const;
 
 interface Analysis {
-  emotionalPatterns: string;
-  keyThemes: string;
-  suggestions: string;
+  readonly emotionalPatterns: string;
+  readonly keyThemes: string;
+  readonly suggestions: string;
 }
 
 interface JournalEntry {
-  id: string;
-  content: string;
-  created_at: string;
-  mood?: Mood;
-  mood_intensity?: number;
-  energy_level?: number;
+  readonly id: string;
+  readonly content: string;
+  readonly created_at: string;
+  readonly mood?: Mood;
+  readonly mood_intensity?: number;
+  readonly energy_level?: number;
 }
 
 interface User {
@@ -141,29 +142,69 @@ interface User {
 }
 
 interface MoodSelection {
-  mood: Mood;
-  intensity: number;
-  energyLevel: number;
+  readonly mood: Mood;
+  readonly intensity: number;
+  readonly energyLevel: number;
 }
 
+interface DeleteDialogState {
+  readonly isOpen: boolean;
+  readonly entryId: string | null;
+}
+
+interface MoodHistoryEntry {
+  readonly mood: Mood;
+  readonly created_at: string;
+}
+
+interface WritingStatsProps {
+  entries: readonly JournalEntry[];
+}
+
+const WritingStats = ({ entries }: WritingStatsProps) => {
+  const totalWords = entries.reduce((acc, entry) => {
+    const words = entry.content.trim().split(/\s+/).filter(word => word.length > 0);
+    return acc + words.length;
+  }, 0);
+  
+  const averageWords = entries.length > 0 ? Math.floor(totalWords / entries.length) : 0;
+  
+  return (
+    <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="bg-white/90 rounded-xl p-4 text-center">
+        <p className="text-2xl font-semibold text-blue-600">{entries.length}</p>
+        <p className="text-sm text-gray-500">Total Entries</p>
+      </div>
+      <div className="bg-white/90 rounded-xl p-4 text-center">
+        <p className="text-2xl font-semibold text-purple-600">{totalWords}</p>
+        <p className="text-sm text-gray-500">Words Written</p>
+      </div>
+      <div className="bg-white/90 rounded-xl p-4 text-center">
+        <p className="text-2xl font-semibold text-green-600">{averageWords}</p>
+        <p className="text-sm text-gray-500">Avg. Words/Entry</p>
+      </div>
+    </div>
+  );
+};
+
 export function Dashboard() {
-  const { user, signOut } = useAuth();
-  const [entry, setEntry] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { signOut } = useAuth();
+  const [entry, setEntry] = useState<string>('');
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('analysis');
-  const [showPrompts, setShowPrompts] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [pastEntries, setPastEntries] = useState<JournalEntry[]>([]);
+  const [showPrompts, setShowPrompts] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [pastEntries, setPastEntries] = useState<readonly JournalEntry[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; entryId: string | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
     isOpen: false,
     entryId: null
   });
   const [selectedMood, setSelectedMood] = useState<MoodSelection | null>(null);
-  const [moodHistory, setMoodHistory] = useState<Array<{ mood: Mood; created_at: string }>>([]);
-  const [moodFilter, setMoodFilter] = useState<'all' | 'positive' | 'challenging' | 'energy'>('all');
+  const [moodHistory, setMoodHistory] = useState<readonly MoodHistoryEntry[]>([]);
+  const [moodFilter, setMoodFilter] = useState<MoodFilterType>('all');
 
   const location = useLocation();
 
@@ -194,12 +235,12 @@ export function Dashboard() {
           return;
         }
 
-        const processedEntries = entries?.map(entry => ({
+        const processedEntries = (entries ?? []).map(entry => ({
           ...entry,
           mood: entry.journal_moods?.[0]?.mood,
           mood_intensity: entry.journal_moods?.[0]?.intensity,
           energy_level: entry.journal_moods?.[0]?.energy_level
-        })) || [];
+        }));
 
         setPastEntries(processedEntries);
       } catch (error) {
@@ -208,7 +249,7 @@ export function Dashboard() {
     };
 
     checkAuthAndFetchEntries();
-  }, []); // Only run once on mount
+  }, []);
 
   useEffect(() => {
     const loadStreakAndMoods = async () => {
@@ -242,13 +283,14 @@ export function Dashboard() {
           selectedMood.energyLevel
         );
 
-        setPastEntries(current => [{
+        const newEntry: JournalEntry = {
           ...savedEntry,
           mood: selectedMood.mood,
           mood_intensity: selectedMood.intensity,
           energy_level: selectedMood.energyLevel
-        }, ...current]);
-        
+        };
+
+        setPastEntries(current => [newEntry, ...current]);
         setEntry('');
         setSelectedMood(null);
       }
@@ -301,7 +343,6 @@ export function Dashboard() {
       const success = await deleteJournalEntry(deleteDialog.entryId);
       
       if (success) {
-        // Update local state
         setPastEntries(current => 
           current.filter(entry => entry.id !== deleteDialog.entryId)
         );
@@ -470,33 +511,6 @@ export function Dashboard() {
     );
   };
 
-  const WritingStats = ({ entries }: { entries: JournalEntry[] }) => {
-    const totalWords = entries.reduce((acc, entry) => {
-      // Split by whitespace and filter out empty strings
-      const words = entry.content.trim().split(/\s+/).filter(word => word.length > 0);
-      return acc + words.length;
-    }, 0);
-    
-    const averageWords = entries.length > 0 ? Math.floor(totalWords / entries.length) : 0;
-    
-    return (
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white/90 rounded-xl p-4 text-center">
-          <p className="text-2xl font-semibold text-blue-600">{entries.length}</p>
-          <p className="text-sm text-gray-500">Total Entries</p>
-        </div>
-        <div className="bg-white/90 rounded-xl p-4 text-center">
-          <p className="text-2xl font-semibold text-purple-600">{totalWords}</p>
-          <p className="text-sm text-gray-500">Words Written</p>
-        </div>
-        <div className="bg-white/90 rounded-xl p-4 text-center">
-          <p className="text-2xl font-semibold text-green-600">{averageWords}</p>
-          <p className="text-sm text-gray-500">Avg. Words/Entry</p>
-        </div>
-      </div>
-    );
-  };
-
   const getMoodEmoji = (mood: Mood): string => {
     const moodEmojis: Record<Mood, string> = {
       'Happy': '😊',
@@ -533,7 +547,7 @@ export function Dashboard() {
     return 'energy';
   };
 
-  const getFilteredEntries = () => {
+  const getFilteredEntries = (): readonly JournalEntry[] => {
     if (moodFilter === 'all') return pastEntries;
     
     return pastEntries.filter(entry => 
