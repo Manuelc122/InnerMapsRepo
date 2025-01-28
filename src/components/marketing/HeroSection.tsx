@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, Shield, Brain, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Navigation } from './Navigation';
-import { Logo } from '../ui/Logo';
+import { Logo } from '../shared/Logo';
 
 export function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
