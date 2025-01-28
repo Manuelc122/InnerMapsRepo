@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../state-management/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AuthModal } from '../Auth/AuthModal';
+import { AuthModal } from '../authentication/AuthModal';
 
 export function PricingSection() {
   const { user } = useAuth();
