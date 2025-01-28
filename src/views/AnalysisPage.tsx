@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAnalytics, type AnalyticsData } from '../lib/analytics';
+import { getAnalytics, type AnalyticsData } from '../utils/analytics';
 import { 
   LineChart, Line, PieChart, Pie, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
