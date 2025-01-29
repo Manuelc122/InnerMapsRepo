@@ -13,7 +13,6 @@ const getRedirectUrl = (plan?: 'monthly' | 'yearly') => {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: (plan?: 'monthly' | 'yearly') => Promise<void>;
   signInWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<void>;
   signUpWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<void>;
   signOut: () => Promise<void>;
@@ -54,24 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const signInWithGoogle = async (plan?: 'monthly' | 'yearly') => {
-    try {
-      setError(null);
-      if (plan) setSelectedPlan(plan);
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: getRedirectUrl(plan)
-        }
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
-      throw err;
-    }
-  };
 
   const signInWithEmail = async (email: string, password: string, plan?: 'monthly' | 'yearly') => {
     try {
@@ -130,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       loading,
-      signInWithGoogle,
       signInWithEmail,
       signUpWithEmail,
       signOut,

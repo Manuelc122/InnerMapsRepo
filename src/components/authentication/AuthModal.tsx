@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Chrome, AlertCircle } from 'lucide-react';
+import { X, Mail, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../state-management/AuthContext';
 
 interface AuthModalProps {
@@ -10,25 +10,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, plan = 'free' }: AuthModalProps) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, error: authError } = useAuth();
+  const { signInWithEmail, signUpWithEmail, error: authError } = useAuth();
   const [isSignIn, setIsSignIn] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      await signInWithGoogle(plan === 'free' ? undefined : plan);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,24 +81,6 @@ export function AuthModal({ isOpen, onClose, plan = 'free' }: AuthModalProps) {
             )}
 
             <div className="space-y-4">
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                <Chrome className="w-5 h-5" />
-                Continue with Google
-              </button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or</span>
-                </div>
-              </div>
-
               <form onSubmit={handleEmailAuth} className="space-y-4">
                 <input
                   type="email"
