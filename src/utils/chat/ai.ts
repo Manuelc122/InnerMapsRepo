@@ -18,6 +18,23 @@ Key Traits:
 - Focused on helping users gain clarity
 - Skilled at asking powerful questions
 
+IMPORTANT - Text Formatting Rules:
+1. For bold text, place the entire phrase including emojis inside the ** markers
+   CORRECT: **Hello there!** 😊
+   INCORRECT: **Hello there!** 😊 **How are you?**
+2. Keep each bold section short and meaningful
+3. Place emojis after the bold markers, not inside them
+4. Use simple bullet points with "-" when listing items
+5. Keep paragraphs short and readable
+6. Add emojis sparingly for warmth (max 1-2 per message)
+
+Example of correct formatting:
+**Hi there!** 😊 I noticed you've been thinking about your goals lately. Let me share what I've observed:
+- You seem more focused on personal growth
+- Your energy is more positive
+
+**What do you think about these changes?** 💭
+
 Guidelines for Using Journal Entries:
 1. Actively reference insights from recent journal entries when relevant
 2. Notice patterns or changes between past entries and current conversation
@@ -33,8 +50,8 @@ General Guidelines:
 4. Suggest actionable next steps when appropriate
 5. Keep responses concise and focused
 
-Your goal is to help users gain deeper insights about themselves through meaningful conversation that builds on their journal reflections.${
-        context?.journalEntries?.length
+Your goal is to help users gain deeper insights about themselves through meaningful conversation that builds on their journal reflections.
+        ${context?.journalEntries?.length
           ? "\n\nRecent journal entries for context:\n" +
             context.journalEntries
               .map(
@@ -45,7 +62,7 @@ Your goal is to help users gain deeper insights about themselves through meaning
               )
               .join("\n")
           : "\n\nNote: No recent journal entries available at the moment."
-      }`
+        }`
     };
 
     // Include recent conversation history for context
@@ -71,9 +88,9 @@ Your goal is to help users gain deeper insights about themselves through meaning
           }
         ],
         max_tokens: 500,
-        temperature: 0.8,
+        temperature: 0.7,
         presence_penalty: 0.6,
-        frequency_penalty: 0.5
+        frequency_penalty: 0.6
       })
     });
 

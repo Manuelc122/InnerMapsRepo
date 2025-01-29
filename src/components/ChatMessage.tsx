@@ -1,42 +1,100 @@
 import React from 'react';
 import { MessageSquare, Lightbulb } from 'lucide-react';
 
-interface ChatMessageProps {
-  message: string;
-  isUser: boolean;
+interface TextBlock {
+  type: 'header' | 'paragraph' | 'list-item' | 'emphasis';
+  content: string;
+  level?: number;
+  format?: {
+    bold?: boolean;
+    italic?: boolean;
+    bullet?: boolean;
+  };
 }
 
-export function ChatMessage({ message, isUser }: ChatMessageProps) {
+interface ChatMessageProps {
+  message: string;
+  blocks?: TextBlock[];
+  isUser: boolean;
+  timestamp?: string;
+}
+
+export function ChatMessage({ message, blocks, isUser, timestamp }: ChatMessageProps) {
+  const renderBlock = (block: TextBlock, index: number) => {
+    const baseStyles = "text-sm leading-relaxed";
+    
+    switch (block.type) {
+      case 'header':
+        const headerSize = block.level && block.level <= 3 
+          ? 'text-lg font-bold'
+          : 'text-base font-semibold';
+        return (
+          <div key={index} className={`${headerSize} mb-3 text-inherit`}>
+            {block.content}
+          </div>
+        );
+
+      case 'paragraph':
+        return (
+          <p key={index} className={`${baseStyles} mb-3`}>
+            {block.content}
+          </p>
+        );
+
+      case 'list-item':
+        return (
+          <div key={index} className={`${baseStyles} mb-2 flex items-start`}>
+            <span className="mr-2 select-none">•</span>
+            <span>{block.content}</span>
+          </div>
+        );
+
+      case 'emphasis':
+        return (
+          <div key={index} className={`${baseStyles} mb-3 font-medium`}>
+            {block.content}
+          </div>
+        );
+
+      default:
+        return (
+          <p key={index} className={`${baseStyles} mb-3`}>
+            {block.content}
+          </p>
+        );
+    }
+  };
+
   return (
-    <div className={`flex gap-3 items-start group animate-fade-in ${isUser ? 'flex-row-reverse' : ''}`}>
-      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-        isUser 
-          ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-100' 
-          : 'bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-indigo-100'
-      } shadow-lg`}>
-        {isUser ? (
-          <MessageSquare className="w-4 h-4 text-white" />
-        ) : (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+      {!isUser && (
+        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center mr-2">
           <Lightbulb className="w-4 h-4 text-white" />
+        </div>
+      )}
+      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        isUser 
+          ? 'bg-blue-500 text-white ml-auto rounded-br-none' 
+          : 'bg-gray-100 text-gray-800 rounded-bl-none'
+      }`}>
+        <div className="space-y-1">
+          {blocks ? (
+            blocks.map((block, index) => renderBlock(block, index))
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{message}</p>
+          )}
+        </div>
+        {timestamp && (
+          <div className={`text-xs mt-2 ${isUser ? 'text-blue-100' : 'text-gray-500'}`}>
+            {timestamp}
+          </div>
         )}
       </div>
-      <div 
-        className={`relative max-w-[80%] group-hover:shadow-lg transition-all duration-300 ${
-          isUser 
-            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl rounded-tr-sm' 
-            : 'bg-white border border-gray-200 rounded-2xl rounded-tl-sm'
-        }`}
-      >
-        <div className="p-4">
-          <div className="text-xs opacity-75 mb-1">
-            {isUser ? 'You' : 'Journal Guide'}
-          </div>
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+      {isUser && (
+        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center ml-2">
+          <MessageSquare className="w-4 h-4 text-white" />
         </div>
-        <div className={`absolute ${isUser ? '-left-2' : '-right-2'} top-3 w-2 h-2 transform rotate-45 ${
-          isUser ? 'bg-blue-500' : 'bg-white border-l border-t border-gray-200'
-        }`} />
-      </div>
+      )}
     </div>
   );
 }

@@ -13,7 +13,10 @@ export interface SpeechRecognition extends EventTarget {
 export interface JournalEntry {
   id: string;
   content: string;
-  timestamp: Date;
+  created_at: string;
+  user_id: string;
+  mood?: number;
+  mood_description?: string;
 }
 
 declare global {

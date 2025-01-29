@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 import { Mood } from './moods';
 import { analyzeJournalContent, PersonalityProfile } from './deepseek';
 

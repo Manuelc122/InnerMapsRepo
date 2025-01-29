@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { supabase } from '../supabaseClient';
 import { ChatMessage } from './types';
 
 export async function saveChatMessage(message: string, isUser: boolean = true) {
