@@ -1,118 +1,131 @@
-# InnerMaps: AI-Powered Personal Journaling Platform
+# InnerMaps - AI-Powered Journal & Mental Health Analytics
 
-InnerMaps is a sophisticated journaling platform that combines the power of AI with personal reflection to help users gain deeper insights into their thoughts, emotions, and patterns.
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-38B2AC.svg)](https://tailwindcss.com/)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-10.18.0-purple.svg)](https://www.framer.com/motion/)
+[![Supabase](https://img.shields.io/badge/Supabase-2.39.0-green.svg)](https://supabase.io/)
+
+InnerMaps is a sophisticated mental health journaling platform that combines the power of AI with personal journaling to provide users with deep insights into their emotional well-being. The application features an intelligent chat interface, mood tracking, and comprehensive analytics to help users better understand their mental health patterns.
 
 ## 🌟 Key Features
 
-### Core Functionality
-- **Voice Journaling**: Advanced voice-to-text with emotion detection and auto-punctuation
-- **AI-Powered Analysis**: Pattern recognition and emotional tracking
-- **Smart Prompts**: Contextual journaling prompts based on mood and patterns
-- **Analytics Dashboard**: Comprehensive visualization of personal growth metrics
-  - Mood Distribution
-  - Writing Time Patterns
-  - Energy & Intensity Trends
-  - Writing Volume Analysis
+### 1. Smart Journaling
+- **AI-Enhanced Journal Entries**: Contextual analysis of journal entries to identify patterns and emotions
+- **Mood Tracking**: Track your daily mood with an intuitive interface
+- **Rich Text Formatting**: Support for markdown formatting including bold, headers, and bullet points
 
-### Technical Features
-- **Real-time Analytics**: Interactive charts powered by Recharts
-- **Responsive Design**: Seamless experience across all devices
-- **Smooth Animations**: Engaging UI transitions with Framer Motion
-- **Secure Authentication**: Robust auth flow via Supabase
+### 2. Intelligent Chat Interface
+- **Context-Aware AI Assistant**: Chatbot that references your previous journal entries for personalized support
+- **Natural Language Processing**: Advanced text processing for better understanding of user intent
+- **Markdown Support**: Rich text formatting in chat messages for better expression
 
-## 🛠 Tech Stack
+### 3. Analytics Dashboard
+- **Mood Pattern Analysis**: Visual representations of mood trends over time
+- **Interactive Charts**: Powered by Recharts for comprehensive data visualization
+- **Insight Generation**: AI-powered analysis of journaling patterns and emotional trends
+
+### 4. Security & Privacy
+- **Secure Authentication**: Powered by Supabase for reliable user authentication
+- **Data Encryption**: Secure storage of sensitive user information
+- **Private Journaling**: Personal space that's completely private and secure
+
+## 🚀 Technology Stack
 
 - **Frontend**: React 18 with TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS with custom theming
 - **State Management**: React Context API
 - **Authentication**: Supabase Auth
-- **Database**: Supabase
-- **Charts**: Recharts
+- **Database**: Supabase PostgreSQL
+- **AI Integration**: Custom AI implementation with advanced NLP
 - **Animations**: Framer Motion
-- **Routing**: React Router
+- **Charts**: Recharts
 - **Build Tool**: Vite
 
-## 📁 Project Structure
+## 💻 Local Development
 
-```
-src/
-├── components/              # Reusable UI components
-│   ├── marketing/          # Landing and marketing pages components
-│   ├── authentication/     # Login, signup, and auth-related components
-│   ├── subscription/       # Pricing and subscription components
-│   └── shared/            # Common UI elements and layouts
-├── state-management/       # Global state and context providers
-├── custom-hooks/          # Reusable React hooks and logic
-├── utilities/             # Helper functions and common utilities
-├── views/                 # Main application views/pages
-├── theme/                 # Styling, themes, and design tokens
-└── interfaces/            # TypeScript type definitions and interfaces
-```
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Git
 
-## 🚀 Getting Started
+### Setup Instructions
 
-1. **Prerequisites**
-   - Node.js (v16+)
-   - npm or yarn
-
-2. **Installation**
+1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/InnerMaps.git
-   cd InnerMaps
+   git clone https://github.com/YourUsername/InnerMapsRepo.git
+   cd InnerMapsRepo
+   ```
+
+2. Install dependencies:
+   ```bash
    npm install
    ```
 
-3. **Environment Setup**
-   Create a `.env` file:
-   ```
+3. Create a `.env` file in the root directory with the following variables:
+   ```env
    VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_key
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_DEEPSEEK_API_KEY=your_ai_api_key
    ```
 
-4. **Development**
+4. Start the development server:
    ```bash
    npm run dev
    ```
-   Visit `http://localhost:5174`
 
-## 🔒 Security Features
+5. Open [http://localhost:5173](http://localhost:5173) in your browser
 
-- End-to-end encryption for journal entries
-- Secure authentication via Supabase
-- Data sovereignty and GDPR compliance
-- Regular security audits
+## 🌐 Production Deployment
 
-## 💻 Development Guidelines
+The application is deployed and accessible at [https://innermaps.co](https://innermaps.co)
 
-### Code Style
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for formatting
+### Deployment Features
+- **CI/CD Pipeline**: Automated deployment with GitHub Actions
+- **Edge Functions**: Optimized serverless functions for AI processing
+- **Global CDN**: Fast content delivery worldwide
+- **Automatic HTTPS**: Secure SSL/TLS encryption
+- **Database Backups**: Regular automated backups of user data
 
-### Component Structure
-- Functional components with hooks
-- Props typing with TypeScript interfaces
-- Modular and reusable design patterns
+## 🏗️ Project Structure
 
-### State Management
-- Context API for global state
-- Local state with useState
-- Custom hooks for shared logic
+```
+src/
+├── components/          # Reusable UI components
+├── views/              # Page components
+├── hooks/              # Custom React hooks
+├── utils/              # Utility functions
+├── state-management/   # Context and state management
+├── theme/             # Theme configuration
+├── interfaces/        # TypeScript interfaces
+└── custom-hooks/     # Additional custom hooks
+```
 
-## 🤝 Contributing
+## 🔑 Core Components
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+### ChatMessage Component
+- Handles message formatting and display
+- Supports markdown and custom formatting
+- Integrates with AI context processing
 
-## 📄 License
+### Journal Analytics
+- Processes journal entries for patterns
+- Generates mood analytics
+- Creates visual representations of data
 
-This project is licensed under the MIT License.
+### Authentication Flow
+- Manages user sessions
+- Handles secure login/logout
+- Protects private routes
 
-## 🔗 Links
+## 📝 License
 
-- [Production Site](https://innermaps.co)
-- [Documentation](https://docs.innermaps.co)
-- [Support](mailto:support@innermaps.co)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙋‍♂️ Support & Contact
+
+For support or inquiries, please contact us at [support@innermaps.co](mailto:support@innermaps.co) or visit [innermaps.co](https://innermaps.co).
+
+---
+
+Built with ❤️ for better mental health
