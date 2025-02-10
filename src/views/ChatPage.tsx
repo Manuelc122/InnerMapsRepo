@@ -1,27 +1,32 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
-import { createSession, setActiveSession, deleteSession } from '../store/chatSlice';
+import { createSession, setActiveSession, deleteSession, initializeChat } from '../store/chatSlice';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { format } from 'date-fns';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
 
 export function ChatPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { sessions, activeSessionId } = useSelector((state: RootState) => state.chat);
+  const { sessions, activeSessionId, loading } = useSelector((state: RootState) => state.chat);
   const [deleteDialog, setDeleteDialog] = React.useState<{ isOpen: boolean; sessionId: string | null }>({
     isOpen: false,
     sessionId: null
   });
 
+  // Initialize chat data on mount
+  useEffect(() => {
+    dispatch(initializeChat());
+  }, [dispatch]);
+
   // Create initial session if none exists
   useEffect(() => {
-    if (sessions.length === 0) {
+    if (!loading && sessions.length === 0) {
       dispatch(createSession());
-    } else if (!activeSessionId) {
+    } else if (!loading && !activeSessionId && sessions.length > 0) {
       dispatch(setActiveSession(sessions[0].id));
     }
-  }, [dispatch, sessions.length, activeSessionId]);
+  }, [dispatch, sessions.length, activeSessionId, loading]);
 
   const activeSession = sessions.find(session => session.id === activeSessionId);
 
@@ -29,7 +34,7 @@ export function ChatPage() {
     setDeleteDialog({ isOpen: true, sessionId });
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteDialog.sessionId) {
       dispatch(deleteSession(deleteDialog.sessionId));
       setDeleteDialog({ isOpen: false, sessionId: null });

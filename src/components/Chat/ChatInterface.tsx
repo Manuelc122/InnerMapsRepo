@@ -6,6 +6,8 @@ import { ChatSession, ChatMessage } from '../../types/chat';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAuth } from '../../state-management/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 interface ChatInterfaceProps {
   session: ChatSession;
@@ -15,7 +17,10 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(session.messages);
+  const { user } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -23,22 +28,109 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    setMessages(session.messages);
   }, [session.messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !user || isLoading) return;
 
-    setIsTyping(true);
     const messageContent = input.trim();
     setInput('');
+    setIsLoading(true);
     
     try {
-      await dispatch(sendMessage({ sessionId: session.id, content: messageContent }));
-    } catch (error) {
-      console.error('Failed to send message:', error);
+      // Create new user message
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+        pending: false
+      };
+      
+      // Update messages immediately with user's message
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+      
+      // Dispatch the message and get streaming updates
+      const response = await dispatch(sendMessage({ 
+        sessionId: session.id, 
+        content: messageContent,
+        onStream: (content: string) => {
+          setMessages(prevMessages => {
+            const lastMessage = prevMessages[prevMessages.length - 1];
+            if (lastMessage.role === 'assistant' && lastMessage.pending) {
+              // Update the existing assistant message
+              return [
+                ...prevMessages.slice(0, -1),
+                { 
+                  ...lastMessage, 
+                  content,
+                  id: lastMessage.id
+                }
+              ];
+            }
+            // Add a new streaming message while keeping the user message
+            const streamingMessage: ChatMessage = {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content,
+              timestamp: new Date().toISOString(),
+              pending: true
+            };
+            return [...prevMessages, streamingMessage];
+          });
+        }
+      })).unwrap();
+      
+      // Update messages with the final state
+      setMessages(prevMessages => {
+        // Find the last assistant message if it exists
+        const assistantMessageIndex = prevMessages
+          .map(msg => msg.role)
+          .lastIndexOf('assistant');
+        
+        if (assistantMessageIndex !== -1) {
+          // Replace the existing assistant message
+          return [
+            ...prevMessages.slice(0, assistantMessageIndex),
+            response.assistantMessage,
+            ...prevMessages.slice(assistantMessageIndex + 1)
+          ];
+        }
+        
+        // If no assistant message exists, append the new one
+        return [...prevMessages, response.assistantMessage];
+      });
+      
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      let errorMessage = 'I apologize, but I encountered an error. Please try again.';
+      
+      if (error?.message?.includes('timeout')) {
+        errorMessage = 'The request timed out. Please try again.';
+      } else if (error?.message?.includes('network')) {
+        errorMessage = 'There seems to be a network issue. Please check your connection and try again.';
+      } else if (error?.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: errorMessage,
+          timestamp: new Date().toISOString(),
+          pending: false
+        }
+      ]);
     } finally {
-      setIsTyping(false);
+      setIsLoading(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -84,11 +176,12 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
                   />
                 ),
                 em: ({node, ...props}) => <em className="italic" {...props} />,
-                code: ({node, inline, ...props}) => (
-                  inline 
-                    ? <code className={`px-1 py-0.5 rounded ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props} />
-                    : <code className={`block p-3 rounded-lg my-2 ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props} />
-                ),
+                code: ({node, className, children, ...props}: any) => {
+                  const isInline = !className?.includes('language-');
+                  return isInline 
+                    ? <code className={`px-1 py-0.5 rounded ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
+                    : <code className={`block p-3 rounded-lg my-2 ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
+                },
                 blockquote: ({node, ...props}) => (
                   <blockquote 
                     className={`border-l-4 pl-4 my-2 ${
@@ -126,17 +219,14 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {session.messages.map(renderMessage)}
-        {isTyping && (
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
+        {messages.map(renderMessage)}
+        {isLoading && (
+          <div className="flex items-center gap-2 text-gray-500">
             <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 flex items-center justify-center text-white text-xs">
               AI
             </div>
-            <div className="flex gap-1">
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>.</span>
-            </div>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Thinking...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -146,19 +236,27 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
       <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
         <div className="flex space-x-4">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Share what's on your mind..."
+            placeholder={isLoading ? "Waiting for response..." : "Share what's on your mind..."}
             className="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-            disabled={isTyping}
+            disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={isTyping || !input.trim()}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            disabled={isLoading || !input.trim()}
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
           >
-            Send
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              'Send'
+            )}
           </button>
         </div>
       </form>
