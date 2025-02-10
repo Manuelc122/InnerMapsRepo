@@ -1,14 +1,15 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { 
   Sparkles, MessageSquare, Brain, 
   Target, Compass, Star,
   FileText, LineChart,
   Mic, Pause, Play,
-  LucideIcon
+  LucideIcon, ChevronRight, ChevronLeft
 } from 'lucide-react';
 import { JournalAnalytics } from './AppShowcase/JournalAnalytics';
+import { Link } from 'react-router-dom';
 
 type WaveformData = number[];
 
@@ -113,176 +114,285 @@ Everyone keeps saying how 'productive' and 'dedicated' I am, but at what cost? I
   }
 ];
 
+interface DemoStep {
+  id: number;
+  title: string;
+  description: string;
+  preview: React.ReactNode;
+}
+
 export function DemoSection() {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1
-  });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
 
-  const renderContent = (entry: JournalEntry) => {
-    switch (entry.type) {
-      case 'voice':
-        if (!entry.waveform || !entry.content || !entry.duration) return null;
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+  const demoSteps: DemoStep[] = [
+    {
+      id: 1,
+      title: "Voice-to-Insight Journaling",
+      description: "Transform your spoken thoughts into structured insights with advanced emotion recognition and theme analysis",
+      preview: (
+        <div className="relative h-full w-full bg-white rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+              <Mic className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Voice Entry</h3>
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Mic className="w-5 h-5 text-blue-600" />
-                </div>
-                <span className="font-medium">Voice Journal</span>
+                <span className="text-sm text-emerald-600">Emotion detected: Contemplative</span>
+                <span className="text-sm text-blue-600">Clarity score: 87%</span>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500">{entry.duration}</span>
-                <button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
-                  <Play className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="relative h-24 bg-gray-50 rounded-lg p-4">
-              <div className="absolute inset-0 flex items-center justify-between px-4">
-                {entry.waveform.map((height, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-blue-400 rounded-full"
-                    style={{ 
-                      height: `${height * 100}%`,
-                      opacity: 0.7 + (height * 0.3)
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">Transcript</span>
-              </div>
-              <p className="text-gray-600 whitespace-pre-line">{entry.content}</p>
             </div>
           </div>
-        );
-
-      case 'chat':
-        if (!entry.conversation) return null;
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className="font-medium">AI Coach</span>
+          <div className="mb-6">
+            <div className="text-sm text-gray-600 mb-3">Real-time transcription:</div>
+            <div className="bg-gray-50 p-4 rounded-xl">
+              "I'm realizing that my best decisions come when I take time to reflect. Today's meeting was different because I prepared by reviewing my past insights..."
             </div>
-            {entry.conversation.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[80%] rounded-lg p-3 ${
-                  msg.role === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100'
-                }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
           </div>
-        );
-
-      case 'analysis':
-        if (!entry.content_analysis) return null;
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <LineChart className="w-5 h-5 text-blue-600" />
-                <span className="font-medium">Your Patterns & Insights</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <FileText className="w-4 h-4" />
-                <span>{entry.content_analysis.entryCount}</span>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {entry.content_analysis.sections.map((section, i) => (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              {Array.from({ length: 30 }).map((_, index) => (
                 <div
-                  key={i}
-                  className="bg-white rounded-lg p-4 border border-gray-100"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <section.icon className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">{section.title}</h4>
-                      <p className="text-gray-600 text-sm">{section.text}</p>
-                    </div>
-                  </div>
-                </div>
+                  key={index}
+                  className="flex-1 h-12 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full opacity-50 animate-pulse"
+                  style={{
+                    animationDelay: `${index * 0.1}s`,
+                    height: `${Math.sin(index * 0.5) * 24 + 24}px`
+                  }}
+                />
               ))}
             </div>
           </div>
-        );
+        </div>
+      )
+    },
+    {
+      id: 2,
+      title: "Advanced Pattern Recognition",
+      description: "Uncover deep insights about your behaviors, thoughts, and growth opportunities through AI-powered analysis",
+      preview: (
+        <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Personal Growth Analysis</h3>
+              <p className="text-sm text-gray-500">Based on 28 journal entries</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Growth Trajectory</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Self-awareness</span>
+                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
+                    <div className="w-[85%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Decision clarity</span>
+                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
+                    <div className="w-[78%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Emotional balance</span>
+                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
+                    <div className="w-[92%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Key Insights</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Strong correlation between morning reflection and productive days
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  Increased decision confidence after journaling sessions
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-purple-500" />
+                  Growing emotional vocabulary and self-expression
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 3,
+      title: "Your Personal Growth Companion",
+      description: "Experience breakthrough moments with an AI that combines the wisdom of world-renowned psychologists with modern coaching techniques",
+      preview: (
+        <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Growth Session</h3>
+              <p className="text-sm text-emerald-600">Breakthrough Insight</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+                <p className="text-sm">I've been working 60-hour weeks trying to prove myself, but lately I feel disconnected from everything that matters - my relationships, my health, even my sense of purpose. Everyone sees me as successful, but inside I feel like I'm just running on autopilot.</p>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="bg-gray-100 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                <p className="text-sm">That disconnect between external success and inner fulfillment is something many high-achievers face. What would it mean to you to feel truly successful, beyond the metrics others use to measure it?</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+                <p className="text-sm">I've never really thought about it that way... I guess true success would be feeling like I'm growing as a person, not just in my career. Having deep connections, being present for the moments that matter, and feeling like my work serves a greater purpose than just climbing the ladder.</p>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="bg-gray-100 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                <p className="text-sm">This is a powerful realization - you're describing success in terms of wholeness rather than achievement alone. What small step could you take this week to align your daily choices with this deeper definition of success?</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
     }
+  ];
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => (prev + 1) % demoSteps.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, demoSteps.length]);
+
+  const nextStep = () => {
+    setCurrentStep((prev) => (prev + 1) % demoSteps.length);
+    setIsPlaying(false);
+  };
+
+  const prevStep = () => {
+    setCurrentStep((prev) => (prev - 1 + demoSteps.length) % demoSteps.length);
+    setIsPlaying(false);
   };
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={inView ? { opacity: 1 } : { opacity: 0 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24"
-    >
-      <div className="text-center mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-4 py-1 bg-blue-50 rounded-full text-blue-600 mb-4"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="text-sm font-medium">Your Journey</span>
-        </motion.div>
-        
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          Experience Personal Growth
-        </h2>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          See how InnerMaps helps you track your journey and uncover insights
-        </p>
+    <section id="demo" className="py-24 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-48 right-0 w-96 h-96 bg-primary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+        <div className="absolute -bottom-48 left-0 w-96 h-96 bg-secondary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
       </div>
 
-      <div className="space-y-8">
-        {journeyEntries.map((entry, index) => (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
           <motion.div
-            key={index}
             initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: index * 0.2 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1 bg-primary-light/10 rounded-full text-primary mb-4"
           >
-            {renderContent(entry)}
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-medium">See It In Action</span>
           </motion.div>
-        ))}
+          
+          <h2 className="text-4xl font-bold mb-4 gradient-text">
+            Experience Inner Growth
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Watch how our AI-powered journaling platform helps you unlock deeper self-understanding
+          </p>
+        </div>
 
-        {/* Analytics Dashboard */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: journeyEntries.length * 0.2 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <LineChart className="w-5 h-5 text-blue-600" />
+        <div className="relative">
+          <div className="aspect-[16/9] max-w-4xl mx-auto">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-white rounded-3xl overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full p-8"
+                >
+                  <div className="grid md:grid-cols-2 gap-8 h-full">
+                    <div className="flex flex-col justify-center">
+                      <h3 className="text-2xl font-bold mb-4 gradient-text">
+                        {demoSteps[currentStep].title}
+                      </h3>
+                      <p className="text-gray-600 mb-8">
+                        {demoSteps[currentStep].description}
+                      </p>
+                    </div>
+                    <div className="relative h-full">
+                      {demoSteps[currentStep].preview}
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <span className="font-medium">Analytics Dashboard</span>
           </div>
-          <JournalAnalytics />
-        </motion.div>
+
+          {/* Controls */}
+          <div className="absolute left-0 right-0 bottom-4 flex justify-center items-center gap-4">
+            <button
+              onClick={prevStep}
+              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
+            >
+              {isPlaying ? (
+                <Pause className="w-6 h-6 text-gray-600" />
+              ) : (
+                <Play className="w-6 h-6 text-gray-600" />
+              )}
+            </button>
+            <button
+              onClick={nextStep}
+              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Step indicators */}
+          <div className="absolute -bottom-12 left-0 right-0">
+            <div className="flex justify-center items-center gap-2">
+              {demoSteps.map((step, index) => (
+                <button
+                  key={step.id}
+                  onClick={() => {
+                    setCurrentStep(index);
+                    setIsPlaying(false);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                    currentStep === index
+                      ? 'w-8 bg-blue-500'
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </section>
   );
 } 

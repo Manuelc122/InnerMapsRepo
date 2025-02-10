@@ -1,45 +1,25 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export function Logo() {
   return (
-    <div className="flex items-center gap-2">
-      <motion.div 
-        className="relative w-8 h-8"
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
-      >
-        {/* Blue circle with subtle gradient */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-600 to-blue-500" />
-        
-        {/* White inner circle with subtle shadow */}
-        <div className="absolute inset-1.5 rounded-full bg-white shadow-inner" />
-      </motion.div>
-
-      {/* Brand name with hover effect */}
-      <motion.span 
-        className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent"
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        InnerMaps
-      </motion.span>
-    </div>
+    <Link to="/" className="flex items-center space-x-2">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#4461F2] to-[#7E87FF] flex items-center justify-center">
+        <div className="w-3 h-3 bg-white rounded-full"></div>
+      </div>
+      <span className="text-xl font-semibold gradient-text">InnerMaps</span>
+    </Link>
   );
 }
 
 export function LogoSmall() {
   return (
-    <motion.div 
-      className="relative w-6 h-6"
-      whileHover={{ scale: 1.05 }}
-      transition={{ type: "spring", stiffness: 300, damping: 15 }}
-    >
+    <div className="relative w-6 h-6">
       {/* Blue circle with subtle gradient */}
       <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-600 to-blue-500" />
       
       {/* White inner circle with subtle shadow */}
       <div className="absolute inset-1.5 rounded-full bg-white shadow-inner" />
-    </motion.div>
+    </div>
   );
 }

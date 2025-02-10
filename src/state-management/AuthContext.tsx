@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../utils/supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import { supabase, checkSupabaseConnection } from '../utils/supabaseClient';
+import type { User, AuthResponse, SignInWithPasswordCredentials } from '@supabase/supabase-js';
+import { validatePassword, validateEmail, sanitizeInput } from '../utils/validation';
+
+// Security constants
+const MAX_AUTH_RETRIES = 3;
+const AUTH_COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 const getRedirectUrl = (plan?: 'monthly' | 'yearly') => {
   const isDevelopment = import.meta.env.DEV;
@@ -17,6 +24,8 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<void>;
   signOut: () => Promise<void>;
   error: string | null;
+  isConnected: boolean;
+  sessionTimeRemaining: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,26 +35,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly' | undefined>();
+  const [isConnected, setIsConnected] = useState(false);
+  const [authAttempts, setAuthAttempts] = useState(0);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
+  const [lastActivityTime, setLastActivityTime] = useState(Date.now());
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(SESSION_TIMEOUT);
+
+  // Update last activity time on user interaction
+  useEffect(() => {
+    const updateActivity = () => {
+      setLastActivityTime(Date.now());
+    };
+
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+    };
+  }, []);
+
+  // Check for session timeout and inactivity
+  useEffect(() => {
+    if (!user || !sessionStart) return;
+
+    const checkSession = () => {
+      const now = Date.now();
+      const sessionAge = now - sessionStart;
+      const inactivityTime = now - lastActivityTime;
+
+      // Check session timeout
+      if (sessionAge >= SESSION_TIMEOUT) {
+        signOut();
+        setError('Session expired. Please sign in again.');
+        return;
+      }
+
+      // Check inactivity timeout
+      if (inactivityTime >= INACTIVITY_TIMEOUT) {
+        signOut();
+        setError('Session ended due to inactivity. Please sign in again.');
+        return;
+      }
+
+      // Update remaining session time
+      setSessionTimeRemaining(Math.max(0, SESSION_TIMEOUT - sessionAge));
+    };
+
+    const interval = setInterval(checkSession, 1000);
+    return () => clearInterval(interval);
+  }, [user, sessionStart, lastActivityTime]);
 
   useEffect(() => {
-    // Check active session
-    const checkSession = async () => {
+    const initializeAuth = async () => {
       try {
+        // Check Supabase connection first
+        const connected = await checkSupabaseConnection();
+        setIsConnected(connected);
+        
+        if (!connected) {
+          setError('Unable to connect to authentication service. Please check your internet connection.');
+          setLoading(false);
+          return;
+        }
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
         
         setUser(session?.user ?? null);
         setLoading(false);
       } catch (err) {
-        console.error('Session check error:', err);
+        console.error('Auth initialization error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize authentication');
         setUser(null);
         setLoading(false);
       }
     };
 
-    checkSession();
+    initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -57,34 +131,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, password: string, plan?: 'monthly' | 'yearly') => {
     try {
       setError(null);
+      
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeInput(email);
+      if (!validateEmail(sanitizedEmail)) {
+        throw new Error('Invalid email format');
+      }
+
+      // Check for too many attempts
+      const now = Date.now();
+      if (authAttempts >= MAX_AUTH_RETRIES && (now - lastAttemptTime) < AUTH_COOLDOWN_TIME) {
+        const remainingCooldown = Math.ceil((AUTH_COOLDOWN_TIME - (now - lastAttemptTime)) / 1000 / 60);
+        throw new Error(`Too many login attempts. Please try again in ${remainingCooldown} minutes.`);
+      }
+
+      if (!isConnected) {
+        throw new Error('Unable to connect to authentication service. Please check your internet connection.');
+      }
+
       if (plan) setSelectedPlan(plan);
       
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: {
-          emailRedirectTo: getRedirectUrl(plan)
-        }
-      });
-      if (error) throw error;
+      const credentials: SignInWithPasswordCredentials = {
+        email: sanitizedEmail,
+        password
+      };
+
+      const { error, data }: AuthResponse = await supabase.auth.signInWithPassword(credentials);
+      
+      if (error) {
+        setAuthAttempts(prev => prev + 1);
+        setLastAttemptTime(now);
+        throw error;
+      }
+
+      // Initialize session
+      setSessionStart(Date.now());
+      setLastActivityTime(Date.now());
+      
+      // Reset attempts on successful login
+      setAuthAttempts(0);
+      setLastAttemptTime(0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
+      console.error('Sign in error:', err);
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const signUpWithEmail = async (email: string, password: string, plan?: 'monthly' | 'yearly') => {
     try {
       setError(null);
+
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeInput(email);
+      if (!validateEmail(sanitizedEmail)) {
+        throw new Error('Invalid email format');
+      }
+
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.errors.join('\n'));
+      }
+
       if (plan) setSelectedPlan(plan);
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: sanitizedEmail,
         password,
         options: {
           emailRedirectTo: getRedirectUrl(plan),
           data: {
-            full_name: email.split('@')[0]
+            full_name: sanitizedEmail.split('@')[0]
           }
         }
       });
@@ -101,6 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
+      setSessionStart(null);
+      setSessionTimeRemaining(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign out');
       throw err;
@@ -114,7 +234,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithEmail,
       signUpWithEmail,
       signOut,
-      error
+      error,
+      isConnected,
+      sessionTimeRemaining
     }}>
       {children}
     </AuthContext.Provider>

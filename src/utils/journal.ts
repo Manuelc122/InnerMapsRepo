@@ -1,68 +1,52 @@
-import { supabase } from './supabase';
-import { withAuth } from './api';
-import type { JournalEntry } from '../types';
+import { supabase } from './supabaseClient';
 
-export async function saveJournalEntry(entry: Omit<JournalEntry, 'id'>) {
-  return withAuth(async (userId) => {
-    try {
-      console.log('Starting to save journal entry:', { content: entry.content });
-      
-      // Save journal entry
-      const { data: journalEntry, error } = await supabase
-        .from('journal_entries')
-        .insert({
-          user_id: userId,
-          content: entry.content,
-          timestamp: entry.timestamp.toISOString()
-        })
-        .select()
-        .single();
+export async function saveJournalEntry(entry: string) {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) throw new Error('No authenticated user found');
 
-      if (error) {
-        console.error('Error saving journal entry:', error);
-        throw error;
-      }
-
-      console.log('Journal entry saved successfully:', journalEntry);
-
-      return {
-        id: journalEntry.id,
-        content: journalEntry.content,
-        timestamp: new Date(journalEntry.timestamp)
-      };
-    } catch (error) {
-      console.error('Error in saveJournalEntry:', error);
-      throw error;
-    }
-  });
-}
-
-export async function getJournalEntries() {
-  return withAuth(async (userId) => {
     const { data, error } = await supabase
       .from('journal_entries')
-      .select('*')
-      .eq('user_id', userId)
-      .order('timestamp', { ascending: false });
+      .insert({
+        user_id: userData.user.id,
+        content: entry
+      })
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Save error details:', error);
+      throw new Error(`Failed to save: ${error.message}`);
+    }
 
-    return data.map(entry => ({
-      id: entry.id,
-      content: entry.content,
-      timestamp: new Date(entry.timestamp)
-    }));
-  });
+    return data;
+  } catch (error) {
+    console.error('Save error:', error);
+    throw error;
+  }
 }
 
-export async function deleteJournalEntry(id: string) {
-  return withAuth(async (userId) => {
+export async function deleteJournalEntry(entryId: string) {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) throw new Error('No authenticated user found');
+
     const { error } = await supabase
       .from('journal_entries')
       .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+      .match({ 
+        id: entryId,
+        user_id: userData.user.id 
+      });
 
-    if (error) throw error;
-  });
+    if (error) {
+      console.error('Delete error details:', error);
+      throw new Error(`Failed to delete: ${error.message}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Delete error:', error);
+    throw error;
+  }
 }

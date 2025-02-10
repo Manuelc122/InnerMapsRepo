@@ -1,131 +1,60 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Settings, Menu, X } from 'lucide-react';
 import { Logo } from '../shared/Logo';
 import { useAuth } from '../../state-management/AuthContext';
-
-const navigation = [
-  { name: 'Journal', href: '/journal' },
-  { name: 'Analysis', href: '/analysis' },
-  { name: 'Chat', href: '/chat' },
-];
+import { Settings } from 'lucide-react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { signOut } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { signOut } = useAuth();
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Logo />
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                to="/journal"
-                className={`text-sm font-medium ${
-                  location.pathname === '/journal' 
-                    ? 'text-[#4461F2]' 
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                Journal
-              </Link>
-              <Link
-                to="/analysis"
-                className={`text-sm font-medium ${
-                  location.pathname === '/analysis' 
-                    ? 'text-[#4461F2]' 
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                Analysis
-              </Link>
-              <Link
-                to="/chat"
-                className={`text-sm font-medium ${
-                  location.pathname === '/chat' 
-                    ? 'text-[#4461F2]' 
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                Chat
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {/* TODO: Implement settings */}}
-              className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => signOut()}
-              className="hidden md:block px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Sign Out
-            </button>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t">
-            <nav className="px-4 py-3 space-y-2">
-              <Link
-                to="/journal"
-                className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                  location.pathname === '/journal' 
-                    ? 'bg-blue-50 text-[#4461F2]' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                Journal
-              </Link>
-              <Link
-                to="/analysis"
-                className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                  location.pathname === '/analysis' 
-                    ? 'bg-blue-50 text-[#4461F2]' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                Analysis
-              </Link>
-              <Link
-                to="/chat"
-                className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                  location.pathname === '/chat' 
-                    ? 'bg-blue-50 text-[#4461F2]' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                Chat
-              </Link>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Logo />
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link
+                  to="/journal"
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                    isActive('/journal')
+                      ? 'border-b-2 border-[#4461F2] text-gray-900'
+                      : 'text-gray-500 hover:border-b-2 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  Journal
+                </Link>
+                <Link
+                  to="/chat"
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                    isActive('/chat')
+                      ? 'border-b-2 border-[#4461F2] text-gray-900'
+                      : 'text-gray-500 hover:border-b-2 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  AI Chat
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center">
               <button
                 onClick={() => signOut()}
-                className="w-full px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-lg"
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700"
               >
+                <Settings className="w-5 h-5 mr-1" />
                 Sign Out
               </button>
-            </nav>
+            </div>
           </div>
-        )}
-      </header>
-
-      <main>{children}</main>
+        </div>
+      </nav>
+      <main className="pt-16">{children}</main>
     </div>
   );
 } 

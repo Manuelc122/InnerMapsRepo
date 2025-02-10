@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../state-management/AuthContext';
 import { Mic, Send, Settings, Loader2, Sparkles, Menu, X, Trash2, BookOpen, Flame, Search } from 'lucide-react';
 import { Logo } from '../components/shared/Logo';
-import { analyzeJournalContent, saveJournalEntry, deleteJournalEntry } from '../utils/deepseek';
+import { saveJournalEntry, deleteJournalEntry } from '../utils/journal';
 import { Link, useLocation } from 'react-router-dom';
 import { VoiceRecorder } from '../components/VoiceRecorder/VoiceRecorder';
 import { supabase } from '../utils/supabaseClient';
@@ -119,12 +119,6 @@ const WRITING_PROMPTS: readonly string[] = [
   "I'm learning to integrate..."
 ] as const;
 
-interface Analysis {
-  readonly emotionalPatterns: string;
-  readonly keyThemes: string;
-  readonly suggestions: string;
-}
-
 interface JournalEntry {
   readonly id: string;
   readonly content: string;
@@ -188,16 +182,12 @@ const WritingStats = ({ entries }: WritingStatsProps) => {
 };
 
 export function Dashboard() {
-  const { signOut } = useAuth();
+  const { user } = useAuth();
   const [entry, setEntry] = useState<string>('');
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('analysis');
   const [showPrompts, setShowPrompts] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [pastEntries, setPastEntries] = useState<readonly JournalEntry[]>([]);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
     isOpen: false,
     entryId: null
@@ -205,128 +195,93 @@ export function Dashboard() {
   const [selectedMood, setSelectedMood] = useState<MoodSelection | null>(null);
   const [moodHistory, setMoodHistory] = useState<readonly MoodHistoryEntry[]>([]);
   const [moodFilter, setMoodFilter] = useState<MoodFilterType>('all');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const location = useLocation();
 
   useEffect(() => {
-    const checkAuthAndFetchEntries = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          console.error('Auth error:', authError);
-          return;
-        }
-
-        const { data: entries, error: fetchError } = await supabase
-          .from('journal_entries')
-          .select(`
-            *,
-            journal_moods (
-              mood,
-              intensity,
-              energy_level
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (fetchError) {
-          console.error('Fetch error:', fetchError);
-          return;
-        }
-
-        const processedEntries = (entries ?? []).map(entry => ({
-          ...entry,
-          mood: entry.journal_moods?.[0]?.mood,
-          mood_intensity: entry.journal_moods?.[0]?.intensity,
-          energy_level: entry.journal_moods?.[0]?.energy_level
-        }));
-
-        setPastEntries(processedEntries);
-      } catch (error) {
-        console.error('Error in checkAuthAndFetchEntries:', error);
-      }
-    };
-
     checkAuthAndFetchEntries();
   }, []);
 
-  useEffect(() => {
-    const loadStreakAndMoods = async () => {
-      const moodData = await getMoodHistory();
-      if (moodData) {
-        setMoodHistory(moodData);
+  const checkAuthAndFetchEntries = async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Auth error:', authError);
+        return;
       }
-    };
 
-    loadStreakAndMoods();
-  }, []);
+      const { data: entries, error: fetchError } = await supabase
+        .from('journal_entries')
+        .select(`
+          *,
+          journal_moods (
+            mood,
+            intensity,
+            energy_level
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        console.error('Fetch error:', fetchError);
+        return;
+      }
+
+      const processedEntries = (entries ?? []).map(entry => ({
+        ...entry,
+        mood: entry.journal_moods?.[0]?.mood,
+        mood_intensity: entry.journal_moods?.[0]?.intensity,
+        energy_level: entry.journal_moods?.[0]?.energy_level
+      }));
+
+      setPastEntries(processedEntries);
+    } catch (error) {
+      console.error('Error in checkAuthAndFetchEntries:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!entry.trim() || isAnalyzing) return;
-    
-    if (!selectedMood) {
-      alert("Please select how you're feeling before saving your entry.");
-      return;
-    }
+    if (!entry.trim()) return;
 
+    setIsSaving(true);
     try {
-      setIsAnalyzing(true);
       const savedEntry = await saveJournalEntry(entry);
       
-      if (savedEntry) {
+      if (selectedMood && savedEntry?.id) {
         await saveMood(
           selectedMood.mood,
           savedEntry.id,
           selectedMood.intensity,
           selectedMood.energyLevel
         );
-
-        const newEntry: JournalEntry = {
-          ...savedEntry,
-          mood: selectedMood.mood,
-          mood_intensity: selectedMood.intensity,
-          energy_level: selectedMood.energyLevel
-        };
-
-        setPastEntries(current => [newEntry, ...current]);
-        setEntry('');
-        setSelectedMood(null);
       }
-    } catch (error: any) {
-      console.error('Failed to save entry:', error);
-      alert(error.message || 'Error saving entry. Please try again.');
+      
+      setEntry('');
+      setSelectedMood(null);
+      await checkAuthAndFetchEntries();
+    } catch (error) {
+      console.error('Error saving entry:', error);
     } finally {
-      setIsAnalyzing(false);
+      setIsSaving(false);
     }
   };
 
   const handlePromptClick = (prompt: string) => {
-    setEntry(prev => prev ? `${prev}\n\n${prompt}` : prompt);
+    setEntry(prev => prev + (prev ? '\n\n' : '') + prompt);
     setShowPrompts(false);
   };
 
   const handleTranscription = (text: string) => {
-    setEntry(prev => prev ? `${prev}\n\n${text}` : text);
+    setEntry(prev => prev + (prev ? ' ' : '') + text);
   };
 
   const handleLiveTranscription = (text: string) => {
-    // Filter out common filler words
-    const fillerWords = ['you', 'um', 'uh', 'ah'];
-    const cleanedText = text.split(' ')
-      .filter(word => !fillerWords.includes(word.toLowerCase()))
-      .join(' ');
-
-    if (!cleanedText) return; // Don't update if only filler words were detected
-
     setEntry(prev => {
-      const textarea = document.querySelector('textarea');
-      if (textarea && textarea.selectionStart === textarea.selectionEnd) {
-        const position = textarea.selectionStart;
-        return prev.slice(0, position) + ' ' + cleanedText + prev.slice(position);
-      }
-      return prev ? `${prev} ${cleanedText}` : cleanedText;
+      const parts = prev.split('...');
+      return parts[0] + text;
     });
   };
 
@@ -336,23 +291,13 @@ export function Dashboard() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteDialog.entryId) return;
-    
+
     try {
-      setDeletingId(deleteDialog.entryId);
-      
-      const success = await deleteJournalEntry(deleteDialog.entryId);
-      
-      if (success) {
-        setPastEntries(current => 
-          current.filter(entry => entry.id !== deleteDialog.entryId)
-        );
-        setDeleteDialog({ isOpen: false, entryId: null });
-      }
-    } catch (error: any) {
-      console.error('Failed to delete entry:', error);
-      alert(error.message || 'Error deleting entry. Please try again.');
-    } finally {
-      setDeletingId(null);
+      await deleteJournalEntry(deleteDialog.entryId);
+      await checkAuthAndFetchEntries();
+      setDeleteDialog({ isOpen: false, entryId: null });
+    } catch (error) {
+      console.error('Error deleting entry:', error);
     }
   };
 
@@ -569,247 +514,161 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/90 via-purple-50/80 to-white relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000" />
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-secondary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-32 left-1/2 w-96 h-96 bg-accent-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
       </div>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         <MoodSelector />
 
         {/* Journal Entry Section */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl p-8 mb-8 transition-all duration-200 hover:shadow-xl border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-1">Today's Entry</h2>
-              <p className="text-sm text-gray-500">
-                {new Date().toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-            <button
-              onClick={() => setShowPrompts(!showPrompts)}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#4461F2] hover:bg-blue-50/80 rounded-xl transition-all duration-200 border border-transparent hover:border-blue-100"
-            >
-              <Sparkles className="w-4 h-4" />
-              Writing Prompts
-            </button>
-          </div>
-
-          {showPrompts && (
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto custom-scrollbar">
-              {WRITING_PROMPTS.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePromptClick(prompt)}
-                  className="p-4 text-left text-sm text-gray-600 hover:text-gray-900 bg-white/80 hover:bg-blue-50/80 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-md border border-gray-100 hover:border-blue-100"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-50/20 to-transparent pointer-events-none rounded-xl" />
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <textarea
                 value={entry}
                 onChange={(e) => setEntry(e.target.value)}
-                placeholder="What's on your mind today?"
-                className="w-full min-h-[200px] p-6 border-2 border-gray-100 rounded-xl focus:border-[#4461F2] focus:ring-[#4461F2] resize-none text-gray-700 leading-relaxed transition-all duration-200 hover:border-gray-200 placeholder:text-gray-400 bg-white/80"
-                disabled={isAnalyzing}
+                placeholder="What's on your mind?"
+                className="w-full h-40 p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#4461F2] resize-none"
+                disabled={isSaving}
               />
-              <div className="absolute bottom-4 right-4 flex items-center gap-3">
-                <div className="text-sm text-gray-400 bg-white/80 px-2 py-1 rounded-lg">
-                  {entry.length} characters
+              {isSaving && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#4461F2]" />
+                    <span className="text-gray-600">Saving your entry...</span>
+                  </div>
                 </div>
-                <VoiceRecorder 
-                  onTranscription={handleTranscription}
-                  onLiveTranscription={handleLiveTranscription}
-                  disabled={isAnalyzing}
-                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <button
-                  type="submit"
-                  disabled={isAnalyzing || !entry.trim() || !selectedMood}
-                  className={`
-                    px-4 py-3 rounded-xl transition-all duration-200 hover:shadow-md 
-                    disabled:hover:shadow-none flex items-center gap-2 hover:scale-[1.02]
-                    ${!selectedMood 
-                      ? 'bg-gray-100 text-gray-400 hover:bg-gray-200 cursor-not-allowed'
-                      : 'bg-[#4461F2] text-white hover:bg-blue-700'
-                    }
-                    disabled:opacity-50
-                  `}
+                  type="button"
+                  onClick={() => setShowPrompts(!showPrompts)}
+                  className="p-2 text-gray-500 hover:text-[#4461F2] hover:bg-blue-50 rounded-lg transition-all duration-200"
                 >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : !selectedMood ? (
-                    <>
-                      <span>Select Mood First</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      <span>Save Entry</span>
-                    </>
-                  )}
+                  <Sparkles className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRecording(!isRecording)}
+                  className="p-2 text-gray-500 hover:text-[#4461F2] hover:bg-blue-50 rounded-lg transition-all duration-200"
+                >
+                  <Mic className="w-5 h-5" />
                 </button>
               </div>
+              <button
+                type="submit"
+                disabled={!entry.trim() || isSaving || !selectedMood}
+                className="px-6 py-2 bg-gradient-to-r from-[#4461F2] to-[#7E87FF] text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Save Entry
+              </button>
             </div>
           </form>
         </div>
 
         {/* Past Entries Section */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl p-8 mb-8">
-          <div className="space-y-8">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-900">Your Journey</h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  {moodFilter === 'all' 
-                    ? 'Reflecting on your emotional path'
-                    : `Showing ${moodFilter} emotions`
-                  }
-                </p>
-              </div>
-              
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold gradient-text">Your Journal Entries</h2>
+            <div className="flex items-center gap-4">
               <div className="flex gap-2">
-                <select 
-                  value={moodFilter}
-                  onChange={(e) => setMoodFilter(e.target.value as typeof moodFilter)}
-                  className={`
-                    px-3 py-2 rounded-lg border transition-all focus:outline-none 
-                    focus:ring-2 focus:ring-blue-200 cursor-pointer text-sm
-                    ${getMoodFilterStyles(moodFilter)}
-                  `}
-                >
-                  <option value="all">All Moods</option>
-                  <option value="positive">Positive Moods</option>
-                  <option value="challenging">Challenging Moods</option>
-                  <option value="energy">Energy States</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-6">
-              {getFilteredEntries().length === 0 ? (
-                <div className="text-center py-8 bg-white/80 rounded-xl border border-dashed border-gray-200">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 rounded-full flex items-center justify-center">
-                    <Search className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-gray-900 font-medium mb-1">No entries found</h3>
-                  <p className="text-gray-500 text-sm">
-                    {moodFilter === 'all' 
-                      ? "You haven't written any entries yet"
-                      : `No entries with ${moodFilter} moods found`
-                    }
-                  </p>
-                </div>
-              ) : (
-                getFilteredEntries().map((entry) => (
-                  <div 
-                    key={entry.id} 
-                    className="group relative bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
+                {(['all', 'positive', 'challenging', 'energy'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setMoodFilter(filter)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                      moodFilter === filter
+                        ? 'bg-[#4461F2] text-white border-[#4461F2]'
+                        : getMoodFilterStyles(filter)
+                    }`}
                   >
-                    {/* Entry Header - Reorganized */}
-                    <div className="space-y-4 mb-4 pb-4 border-b border-gray-100">
-                      {/* Date and Delete Button */}
-                      <div className="flex justify-between items-start">
-                        <time className="flex flex-col">
-                          <span className="text-base font-medium text-gray-900">
-                            {new Date(entry.created_at).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(entry.created_at).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </time>
-                        <button
-                          onClick={() => handleDeleteClick(entry.id)}
-                          disabled={deletingId === entry.id}
-                          className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
-                            transition-all duration-200 opacity-0 group-hover:opacity-100"
-                          title="Delete entry"
-                        >
-                          {deletingId === entry.id ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-5 h-5" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Mood Display */}
-                      {entry.mood && (
-                        <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-xl w-fit">
-                          <span className="text-2xl transform group-hover:scale-110 transition-transform duration-300">
-                            {getMoodEmoji(entry.mood)}
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900">{entry.mood}</span>
-                            <div className="flex gap-3 text-xs text-gray-500">
-                              <div className="flex items-center gap-1" title="Intensity Level">
-                                <span>🎯</span>
-                                <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-blue-500 rounded-full"
-                                    style={{ width: `${(entry.mood_intensity || 0) * 20}%` }}
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1" title="Energy Level">
-                                <span>⚡</span>
-                                <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-yellow-500 rounded-full"
-                                    style={{ width: `${(entry.energy_level || 0) * 20}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Rest of the entry card remains the same */}
-                    <div className="relative">
-                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                        {entry.content}
-                      </p>
-                      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white pointer-events-none" />
-                    </div>
-
-                    <div className="mt-4 flex justify-end">
-                      <span className="text-xs text-gray-400">
-                        {entry.content.trim().split(/\s+/).filter(word => word.length > 0).length} words
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
+                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <WritingStats entries={getFilteredEntries()} />
+          <div className="space-y-6">
+            {getFilteredEntries().length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-full flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No entries yet</h3>
+                <p className="text-gray-600">Start writing to begin your journaling journey</p>
+              </div>
+            ) : (
+              getFilteredEntries().map((entry) => (
+                <div
+                  key={entry.id}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4461F2] to-[#7E87FF] flex items-center justify-center text-white">
+                        {entry.mood && getMoodEmoji(entry.mood)}
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(entry.created_at).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        {entry.mood && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-[#4461F2]">
+                              Feeling {entry.mood}
+                            </span>
+                            {entry.mood_intensity && (
+                              <div className="flex items-center gap-1">
+                                <Flame className="w-4 h-4 text-orange-500" />
+                                <span className="text-sm text-gray-500">
+                                  Intensity: {entry.mood_intensity}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setDeleteDialog({ isOpen: true, entryId: entry.id })}
+                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all duration-200"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {entry.content}
+                    </p>
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white pointer-events-none" />
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <span className="text-xs text-gray-400">
+                      {entry.content.trim().split(/\s+/).filter(word => word.length > 0).length} words
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </main>
 
       <ConfirmDialog

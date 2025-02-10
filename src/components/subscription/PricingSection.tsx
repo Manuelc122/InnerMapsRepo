@@ -1,125 +1,189 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '../../state-management/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AuthModal } from '../authentication/AuthModal';
+import { Check, ArrowRight, Mail, Lock } from 'lucide-react';
+import { useAuth } from '../../state-management/AuthContext';
+
+const features = [
+  'Unlimited journal entries',
+  'Advanced AI insights for deeper self-understanding',
+  'Voice journaling for natural expression',
+  'AI coaching conversations for personal growth'
+];
 
 export function PricingSection() {
-  const { user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSignIn, setIsSignIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { signUpWithEmail, signInWithEmail } = useAuth();
   const navigate = useNavigate();
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const handleGetStarted = () => {
-    if (user) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    try {
+      if (isSignIn) {
+        await signInWithEmail(email, password);
+      } else {
+        await signUpWithEmail(email, password, 'monthly');
+      }
       navigate('/journal');
-    } else {
-      setShowAuthModal(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${isSignIn ? 'sign in' : 'sign up'}`);
     }
   };
 
+  const toggleAuthMode = () => {
+    setIsSignIn(!isSignIn);
+    setError(null);
+  };
+
   return (
-    <>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Outer blur for fading edges */}
-        <div className="absolute inset-0 bg-gradient-radial from-white/80 via-white/50 to-transparent rounded-[3rem] blur-3xl"></div>
-        
-        {/* Inner container for content structure */}
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-xl rounded-3xl"></div>
-        
-        {/* Content */}
-        <div className="relative">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-              Start your journey of self-discovery today with our powerful AI-driven journaling platform
-            </p>
-          </motion.div>
+    <section id="pricing" className="py-24 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary-light/10 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+      </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-16 max-w-lg mx-auto"
-          >
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/50 rounded-[2.5rem] blur-2xl transform scale-105"></div>
-              
-              <div className="relative rounded-2xl bg-white/80 backdrop-blur-sm p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-md">
-                    Full Access
-                  </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold mb-4 gradient-text">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Start your journey of self-discovery today with our powerful AI-driven journaling platform
+          </p>
+        </div>
+
+        {/* Single Pricing Card */}
+        <div className="max-w-lg mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+            {/* Full Access Badge */}
+            <div className="text-center py-3 bg-gradient-to-r from-[#4461F2] to-[#7E87FF]">
+              <span className="inline-block px-6 py-2 text-white text-sm font-medium">
+                Full Access
+              </span>
+            </div>
+
+            {/* Plan Details */}
+            <div className="px-8 pt-6 pb-12">
+              <h3 className="text-xl font-semibold text-center text-gray-900 mb-2">
+                Monthly Plan
+              </h3>
+              <p className="text-center text-gray-600 mb-8">
+                Everything you need for personal growth
+              </p>
+
+              {/* Price */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center">
+                  <span className="text-5xl font-bold gradient-text">$10</span>
+                  <span className="text-gray-500 ml-2">/month</span>
                 </div>
-                
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold text-gray-900">Monthly Plan</h3>
-                  <p className="mt-2 text-gray-600">Everything you need for personal growth</p>
-                  
-                  <div className="mt-8 flex items-baseline justify-center">
-                    <span className="text-5xl font-bold tracking-tight text-blue-600">$10</span>
-                    <span className="text-xl font-medium text-gray-500 ml-2">/month</span>
-                  </div>
-                </div>
+              </div>
 
-                <ul className="mt-10 space-y-4">
-                  {[
-                    { text: 'Unlimited journal entries', highlight: true },
-                    { text: 'Advanced AI insights for deeper self-understanding', highlight: true },
-                    { text: 'Voice journaling for natural expression', highlight: true },
-                    { text: 'AI coaching conversations for personal growth', highlight: true }
-                  ].map((feature, index) => (
-                    <motion.li 
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
-                      className="flex items-center"
-                    >
-                      <div className="flex-shrink-0">
-                        <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className={`ml-3 ${feature.highlight ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                        {feature.text}
-                      </span>
-                    </motion.li>
-                  ))}
-                </ul>
+              {/* Features */}
+              <ul className="space-y-4 mb-8">
+                {features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#4461F2] to-[#7E87FF] flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                    <span className="text-gray-600">{feature}</span>
+                  </li>
+                ))}
+              </ul>
 
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="mt-10"
-                >
-                  <button 
-                    onClick={handleGetStarted}
-                    className="w-full rounded-full bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              {!isAuthModalOpen ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => {
+                      setIsAuthModalOpen(true);
+                      setIsSignIn(false);
+                    }}
+                    className="group block w-full py-4 px-8 text-center text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200"
                   >
                     Get Started Now
+                    <ArrowRight className="ml-2 w-5 h-5 inline-block group-hover:translate-x-1 transition-transform" />
                   </button>
-                </motion.div>
+                  <button
+                    onClick={() => {
+                      setIsAuthModalOpen(true);
+                      setIsSignIn(true);
+                    }}
+                    className="block w-full py-4 px-8 text-center text-[#4461F2] bg-transparent border-2 border-[#4461F2] rounded-xl hover:bg-blue-50 transition-all duration-200"
+                  >
+                    Already have an account? Sign In
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-semibold mb-2">
+                      {isSignIn ? 'Welcome Back!' : 'Create Your Account'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {isSignIn ? 'Sign in to continue your journey' : 'Start your journey today'}
+                    </p>
+                  </div>
 
-                <p className="mt-6 text-center text-sm text-gray-500">
-                  Start improving your life today with AI-powered journaling
-                </p>
-              </div>
+                  {error && (
+                    <div className="text-red-500 text-sm text-center mb-4">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4461F2] bg-white/50"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={isSignIn ? "Enter your password" : "Create a password"}
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4461F2] bg-white/50"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-4 px-8 text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200"
+                  >
+                    {isSignIn ? 'Sign In' : 'Start Journaling'}
+                    <ArrowRight className="ml-2 w-5 h-5 inline-block" />
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={toggleAuthMode}
+                    className="w-full text-sm text-gray-600 hover:text-[#4461F2] transition-colors duration-200"
+                  >
+                    {isSignIn ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+                  </button>
+                </form>
+              )}
+
+              {/* Footer Text */}
+              <p className="text-center text-gray-500 text-sm mt-6">
+                Start improving your life today with AI-powered journaling
+              </p>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
-        plan="monthly"
-      />
-    </>
+    </section>
   );
 }

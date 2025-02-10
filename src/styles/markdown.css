@@ -1,0 +1,63 @@
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-content table th {
+  background-color: #f9fafb;
+}
+
+.markdown-content hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 1rem 0;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+/* Dark mode styles for user messages */
+.text-white .markdown-content a {
+  color: #93c5fd;
+}
+
+.text-white .markdown-content table th,
+.text-white .markdown-content table td {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.text-white .markdown-content table th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.text-white .markdown-content hr {
+  border-color: rgba(255, 255, 255, 0.1);
+} 
