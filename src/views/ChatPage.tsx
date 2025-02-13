@@ -36,8 +36,13 @@ export function ChatPage() {
 
   const handleDeleteConfirm = async () => {
     if (deleteDialog.sessionId) {
-      dispatch(deleteSession(deleteDialog.sessionId));
-      setDeleteDialog({ isOpen: false, sessionId: null });
+      try {
+        await dispatch(deleteSession(deleteDialog.sessionId)).unwrap();
+        setDeleteDialog({ isOpen: false, sessionId: null });
+      } catch (error) {
+        console.error('Failed to delete session:', error);
+        // You might want to show an error toast here
+      }
     }
   };
 
@@ -71,14 +76,9 @@ export function ChatPage() {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 flex items-center justify-center text-white text-xs">
                       AI
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {format(new Date(session.createdAt), 'MMM d, yyyy')}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {session.messages.length} messages
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-gray-900 truncate flex-1">
+                      {session.title || 'New Chat'}
+                    </p>
                   </div>
                 </div>
                 <button

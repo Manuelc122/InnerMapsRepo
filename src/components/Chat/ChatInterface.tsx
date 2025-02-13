@@ -18,20 +18,18 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(session.messages);
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    setMessages(session.messages);
   }, [session.messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,68 +41,13 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
     setIsLoading(true);
     
     try {
-      // Create new user message
-      const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: messageContent,
-        timestamp: new Date().toISOString(),
-        pending: false
-      };
-      
-      // Update messages immediately with user's message
-      setMessages(prevMessages => [...prevMessages, userMessage]);
-      
-      // Dispatch the message and get streaming updates
-      const response = await dispatch(sendMessage({ 
+      await dispatch(sendMessage({ 
         sessionId: session.id, 
         content: messageContent,
         onStream: (content: string) => {
-          setMessages(prevMessages => {
-            const lastMessage = prevMessages[prevMessages.length - 1];
-            if (lastMessage.role === 'assistant' && lastMessage.pending) {
-              // Update the existing assistant message
-              return [
-                ...prevMessages.slice(0, -1),
-                { 
-                  ...lastMessage, 
-                  content,
-                  id: lastMessage.id
-                }
-              ];
-            }
-            // Add a new streaming message while keeping the user message
-            const streamingMessage: ChatMessage = {
-              id: crypto.randomUUID(),
-              role: 'assistant',
-              content,
-              timestamp: new Date().toISOString(),
-              pending: true
-            };
-            return [...prevMessages, streamingMessage];
-          });
+          // Handle streaming updates if needed
         }
       })).unwrap();
-      
-      // Update messages with the final state
-      setMessages(prevMessages => {
-        // Find the last assistant message if it exists
-        const assistantMessageIndex = prevMessages
-          .map(msg => msg.role)
-          .lastIndexOf('assistant');
-        
-        if (assistantMessageIndex !== -1) {
-          // Replace the existing assistant message
-          return [
-            ...prevMessages.slice(0, assistantMessageIndex),
-            response.assistantMessage,
-            ...prevMessages.slice(assistantMessageIndex + 1)
-          ];
-        }
-        
-        // If no assistant message exists, append the new one
-        return [...prevMessages, response.assistantMessage];
-      });
       
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -118,16 +61,6 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
         errorMessage = `Error: ${error.message}`;
       }
       
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: errorMessage,
-          timestamp: new Date().toISOString(),
-          pending: false
-        }
-      ]);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -159,41 +92,48 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
             </span>
           </div>
           <div className={`whitespace-pre-wrap markdown-content ${isUser ? 'text-white' : 'text-gray-700'}`}>
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2" {...props} />,
-                strong: ({node, ...props}) => (
-                  <strong 
-                    className={`font-bold ${isUser ? 'text-white' : 'text-gray-900'}`} 
-                    {...props}
-                  />
-                ),
-                em: ({node, ...props}) => <em className="italic" {...props} />,
-                code: ({node, className, children, ...props}: any) => {
-                  const isInline = !className?.includes('language-');
-                  return isInline 
-                    ? <code className={`px-1 py-0.5 rounded ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
-                    : <code className={`block p-3 rounded-lg my-2 ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
-                },
-                blockquote: ({node, ...props}) => (
-                  <blockquote 
-                    className={`border-l-4 pl-4 my-2 ${
-                      isUser ? 'border-blue-400' : 'border-gray-300'
-                    }`} 
-                    {...props}
-                  />
-                ),
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
+            {message.pending ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Thinking...</span>
+              </div>
+            ) : (
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                  ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                  ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                  li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                  h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2" {...props} />,
+                  h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2" {...props} />,
+                  strong: ({node, ...props}) => (
+                    <strong 
+                      className={`font-bold ${isUser ? 'text-white' : 'text-gray-900'}`} 
+                      {...props}
+                    />
+                  ),
+                  em: ({node, ...props}) => <em className="italic" {...props} />,
+                  code: ({node, className, children, ...props}: any) => {
+                    const isInline = !className?.includes('language-');
+                    return isInline 
+                      ? <code className={`px-1 py-0.5 rounded ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
+                      : <code className={`block p-3 rounded-lg my-2 ${isUser ? 'bg-blue-400' : 'bg-gray-100'}`} {...props}>{children}</code>
+                  },
+                  blockquote: ({node, ...props}) => (
+                    <blockquote 
+                      className={`border-l-4 pl-4 my-2 ${
+                        isUser ? 'border-blue-400' : 'border-gray-300'
+                      }`} 
+                      {...props}
+                    />
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            )}
           </div>
         </div>
       </div>
@@ -218,18 +158,13 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map(renderMessage)}
-        {isLoading && (
-          <div className="flex items-center gap-2 text-gray-500">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 flex items-center justify-center text-white text-xs">
-              AI
-            </div>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Thinking...</span>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 flex flex-col-reverse"
+      >
+        <div className="flex flex-col">
+          {session.messages.map(renderMessage)}
+        </div>
       </div>
 
       {/* Input Area */}
