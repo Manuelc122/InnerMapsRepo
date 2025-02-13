@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, checkSupabaseConnection } from '../utils/supabaseClient';
+import { supabase, checkSupabaseConnection, recoverSession } from '../utils/supabaseClient';
 import type { User, AuthResponse, SignInWithPasswordCredentials } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, sanitizeInput } from '../utils/validation';
 
@@ -95,34 +95,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check Supabase connection first
-        const connected = await checkSupabaseConnection();
-        setIsConnected(connected);
-        
-        if (!connected) {
-          setError('Unable to connect to authentication service. Please check your internet connection.');
-          setLoading(false);
-          return;
-        }
+        setLoading(true);
+        setError(null);
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        
+        // Try to recover the session
+        const session = await recoverSession();
         setUser(session?.user ?? null);
-        setLoading(false);
+        setIsConnected(true);
+        
+        if (session?.user) {
+          setSessionStart(Date.now());
+          setLastActivityTime(Date.now());
+        }
       } catch (err) {
         console.error('Auth initialization error:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize authentication');
         setUser(null);
+        setIsConnected(false);
+      } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
       setUser(session?.user ?? null);
-      setLoading(false);
+      
+      if (event === 'SIGNED_IN') {
+        setSessionStart(Date.now());
+        setLastActivityTime(Date.now());
+      } else if (event === 'SIGNED_OUT') {
+        setSessionStart(null);
+        setSessionTimeRemaining(0);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -132,25 +139,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
       
-      // Input validation and sanitization
       const sanitizedEmail = sanitizeInput(email);
       if (!validateEmail(sanitizedEmail)) {
         throw new Error('Invalid email format');
       }
 
-      // Check for too many attempts
       const now = Date.now();
       if (authAttempts >= MAX_AUTH_RETRIES && (now - lastAttemptTime) < AUTH_COOLDOWN_TIME) {
         const remainingCooldown = Math.ceil((AUTH_COOLDOWN_TIME - (now - lastAttemptTime)) / 1000 / 60);
         throw new Error(`Too many login attempts. Please try again in ${remainingCooldown} minutes.`);
       }
 
-      if (!isConnected) {
-        throw new Error('Unable to connect to authentication service. Please check your internet connection.');
-      }
-
-      if (plan) setSelectedPlan(plan);
-      
       const credentials: SignInWithPasswordCredentials = {
         email: sanitizedEmail,
         password
@@ -164,13 +163,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
-      // Initialize session
       setSessionStart(Date.now());
       setLastActivityTime(Date.now());
-      
-      // Reset attempts on successful login
       setAuthAttempts(0);
       setLastAttemptTime(0);
+      setIsConnected(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
       console.error('Sign in error:', err);

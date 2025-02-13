@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { ChatSession, ChatMessage, TherapySessionState } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
-import { generateResponse } from '../services/chatService';
+import { generateResponse, generateSessionTitle } from '../services/chatService';
 import { supabase } from '../utils/supabaseClient';
 
 const initialState: TherapySessionState = {
@@ -44,7 +44,7 @@ async function saveChatMessage(sessionId: string, message: ChatMessage) {
     if (!authSession?.user?.id) throw new Error('No authenticated user found');
 
     const { error } = await supabase
-      .from('messages')
+      .from('chat_messages')
       .insert({
         id: message.id,
         session_id: sessionId,
@@ -80,7 +80,7 @@ export const createSession = createAsyncThunk(
       // Create initial session
       const session: ChatSession = {
         id: uuidv4(),
-        title: 'AI Coach Chat',
+        title: 'New Chat',
         messages: [{
           id: uuidv4(),
           role: 'assistant',
@@ -137,16 +137,21 @@ export const sendMessage = createAsyncThunk(
       // Save user message to database
       await saveChatMessage(sessionId, userMessage);
 
-      // Get AI response with streaming updates, passing the full context
+      // Get AI response with streaming updates
       const aiResponse = await generateResponse([
         ...session.messages,
         userMessage
       ], sessionId);
 
-      // Update session timestamp
+      // Generate new title after each message exchange
+      const updatedMessages = [...session.messages, userMessage, aiResponse];
+      const newTitle = await generateSessionTitle(updatedMessages);
+      
+      // Update session title in database
       await supabase
         .from('chat_sessions')
         .update({ 
+          title: newTitle,
           updated_at: new Date().toISOString(),
           last_message: aiResponse.content
         })
@@ -156,7 +161,8 @@ export const sendMessage = createAsyncThunk(
       return { 
         sessionId, 
         userMessage,
-        assistantMessage: aiResponse
+        assistantMessage: aiResponse,
+        newTitle
       };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to send message');
@@ -188,18 +194,16 @@ export const loadSessions = createAsyncThunk(
       // Then get all messages for each session
       const sessionsWithMessages = await Promise.all(sessions.map(async (session) => {
         const { data: messages, error: messagesError } = await supabase
-          .from('messages')
-          .select('*')
+          .from('chat_messages')
+          .select('id, role, content, created_at')
           .eq('session_id', session.id)
           .eq('user_id', authSession.user.id)
-          .order('created_at', { ascending: true }); // Get all messages in chronological order
+          .order('created_at', { ascending: true });
 
         if (messagesError) {
           console.error('Error loading messages for session:', session.id, messagesError);
           throw messagesError;
         }
-
-        console.log(`Loaded ${messages?.length || 0} messages for session ${session.id}`);
 
         return {
           id: session.id,
@@ -231,6 +235,32 @@ export const initializeChat = createAsyncThunk(
   }
 );
 
+// Add this new thunk for deleting sessions
+export const deleteSession = createAsyncThunk(
+  'chat/deleteSession',
+  async (sessionId: string, { getState, rejectWithValue }) => {
+    try {
+      const { data: { session: authSession }, error: authError } = await supabase.auth.getSession();
+      if (authError) throw authError;
+      if (!authSession?.user?.id) throw new Error('No authenticated user found');
+
+      // Delete the session from Supabase
+      const { error: deleteError } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', sessionId)
+        .eq('user_id', authSession.user.id);
+
+      if (deleteError) throw deleteError;
+
+      return sessionId;
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete session');
+    }
+  }
+);
+
 const chatSlice = createSlice({
   name: 'chat',
   initialState: {
@@ -248,12 +278,6 @@ const chatSlice = createSlice({
       if (session) {
         session.messages.push(action.payload.message);
         session.updatedAt = new Date().toISOString();
-      }
-    },
-    deleteSession: (state, action: PayloadAction<string>) => {
-      state.sessions = state.sessions.filter(session => session.id !== action.payload);
-      if (state.activeSessionId === action.payload) {
-        state.activeSessionId = state.sessions[0]?.id || null;
       }
     },
     clearError: (state) => {
@@ -296,15 +320,32 @@ const chatSlice = createSlice({
       state.activeSessionId = action.payload.id;
     });
 
-    // Delete session
+    // Update sendMessage.fulfilled case
+    builder.addCase(sendMessage.fulfilled, (state, action) => {
+      const session = state.sessions.find(s => s.id === action.payload.sessionId);
+      if (session) {
+        // Remove any pending messages first
+        session.messages = session.messages.filter(msg => !msg.pending);
+        // Add the new messages
+        session.messages.push(action.payload.userMessage);
+        session.messages.push(action.payload.assistantMessage);
+        session.title = action.payload.newTitle;
+        session.updatedAt = new Date().toISOString();
+      }
+    });
+
+    // Add the delete session cases
     builder.addCase(deleteSession.fulfilled, (state, action) => {
       state.sessions = state.sessions.filter(session => session.id !== action.payload);
       if (state.activeSessionId === action.payload) {
         state.activeSessionId = state.sessions[0]?.id || null;
       }
     });
+    builder.addCase(deleteSession.rejected, (state, action) => {
+      state.error = action.error.message || 'Failed to delete session';
+    });
   }
 });
 
-export const { setActiveSession, addMessage, deleteSession, clearError } = chatSlice.actions;
+export const { setActiveSession, addMessage, clearError } = chatSlice.actions;
 export default chatSlice.reducer; 

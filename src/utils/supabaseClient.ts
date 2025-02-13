@@ -32,7 +32,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: localStorage,
+    storageKey: 'supabase.auth.token',
+    flowType: 'pkce'
   },
   global: {
     headers: {
@@ -44,22 +47,40 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Add session recovery function
+export const recoverSession = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    
+    if (!session) {
+      // Try to refresh the session
+      const { data: { session: refreshedSession }, error: refreshError } = 
+        await supabase.auth.refreshSession();
+      
+      if (refreshError) throw refreshError;
+      if (!refreshedSession) throw new Error('No session available');
+      
+      return refreshedSession;
+    }
+    
+    return session;
+  } catch (error) {
+    console.error('Session recovery failed:', error);
+    // Clear any invalid session data
+    await supabase.auth.signOut();
+    throw error;
+  }
+};
+
 // Add health check function with detailed error logging
 export const checkSupabaseConnection = async () => {
   try {
     console.log('Testing Supabase connection...');
     
-    // First, try a simple auth check
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    if (authError) {
-      console.error('Auth check failed:', {
-        message: authError.message,
-        status: authError.status,
-        name: authError.name
-      });
-      return false;
-    }
-    console.log('Auth check passed, session status:', authData.session ? 'active' : 'none');
+    // First, try to recover the session
+    const session = await recoverSession();
+    console.log('Session status:', session ? 'active' : 'none');
 
     // Then try a simple database query
     const { data, error } = await supabase
@@ -69,7 +90,6 @@ export const checkSupabaseConnection = async () => {
       .single();
 
     if (error) {
-      // Log specific error details
       console.error('Database check failed:', {
         message: error.message,
         code: error.code,
@@ -77,14 +97,11 @@ export const checkSupabaseConnection = async () => {
         hint: error.hint
       });
       
-      // Check if it's a connection error
       if (error.message.includes('connection') || error.code === 'PGRST301') {
         console.error('Connection error detected');
         return false;
       }
       
-      // If the error is just that the table doesn't exist, we can still consider
-      // the connection successful
       if (error.code === '42P01') {
         console.log('Tables not found, but connection successful');
         return true;
