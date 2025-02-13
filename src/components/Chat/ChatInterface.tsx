@@ -18,49 +18,77 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(session.messages);
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setMessages(session.messages);
+  }, [session.messages]);
+
   const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [session.messages]);
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !user || isLoading) return;
+    if (!input.trim() || isLoading) return;
 
-    const messageContent = input.trim();
-    setInput('');
     setIsLoading(true);
-    
+    const trimmedInput = input.trim();
+    setInput('');
+
     try {
-      await dispatch(sendMessage({ 
+      // Create user message
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: trimmedInput,
+        timestamp: new Date().toISOString(),
+      };
+      
+      // Add user message immediately
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+
+      // Add a pending AI message
+      const pendingMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '...',
+        timestamp: new Date().toISOString(),
+        pending: true
+      };
+      setMessages(prevMessages => [...prevMessages, pendingMessage]);
+      
+      // Dispatch the message and get streaming updates
+      const response = await dispatch(sendMessage({ 
         sessionId: session.id, 
-        content: messageContent,
+        content: trimmedInput,
         onStream: (content: string) => {
-          // Handle streaming updates if needed
+          setMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.pending) {
+              lastMessage.content = content;
+            }
+            return newMessages;
+          });
         }
       })).unwrap();
-      
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      let errorMessage = 'I apologize, but I encountered an error. Please try again.';
-      
-      if (error?.message?.includes('timeout')) {
-        errorMessage = 'The request timed out. Please try again.';
-      } else if (error?.message?.includes('network')) {
-        errorMessage = 'There seems to be a network issue. Please check your connection and try again.';
-      } else if (error?.message) {
-        errorMessage = `Error: ${error.message}`;
-      }
-      
+
+      // Update messages with the final response
+      setMessages(prevMessages => {
+        const newMessages = prevMessages.filter(msg => !msg.pending);
+        return [...newMessages, response.userMessage, response.assistantMessage];
+      });
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setMessages(prevMessages => prevMessages.filter(msg => !msg.pending));
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -163,8 +191,9 @@ export function ChatInterface({ session }: ChatInterfaceProps) {
         className="flex-1 overflow-y-auto p-4 flex flex-col-reverse"
       >
         <div className="flex flex-col">
-          {session.messages.map(renderMessage)}
+          {messages.map(renderMessage)}
         </div>
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
