@@ -1,31 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import chatReducer from './chatSlice';
 
 export const store = configureStore({
   reducer: {
-    chat: chatReducer,
+    // Add other reducers here as needed
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these action types
-        ignoredActions: [
-          'chat/sendMessage/pending',
-          'chat/sendMessage/fulfilled',
-          'chat/sendMessage/rejected'
-        ],
-        // Ignore these field paths in all actions
-        ignoredActionPaths: [
-          'meta.arg',
-          'payload.timestamp',
-          'payload.messages.*.timestamp'
-        ],
-        // Ignore these paths in the state
-        ignoredPaths: [
-          'chat.sessions.*.messages.*.timestamp',
-          'chat.sessions.*.createdAt',
-          'chat.sessions.*.updatedAt'
-        ],
+        ignoredActionPaths: ['meta.arg'],
       },
       immutableCheck: false,
     }),

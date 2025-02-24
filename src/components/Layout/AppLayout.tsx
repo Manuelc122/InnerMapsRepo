@@ -30,16 +30,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 >
                   Journal
                 </Link>
-                <Link
-                  to="/chat"
-                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                    isActive('/chat')
-                      ? 'border-b-2 border-[#4461F2] text-gray-900'
-                      : 'text-gray-500 hover:border-b-2 hover:border-gray-300 hover:text-gray-700'
-                  }`}
-                >
-                  AI Chat
-                </Link>
               </div>
             </div>
             <div className="flex items-center">

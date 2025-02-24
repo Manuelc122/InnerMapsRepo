@@ -7,7 +7,6 @@ import { LandingPage } from './views/LandingPage';
 import { Dashboard } from './views/Dashboard';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './state-management/AuthContext';
-import { ChatPage } from './views/ChatPage';
 import { AppLayout } from './components/Layout/AppLayout';
 import { HealthCheck } from './views/HealthCheck';
 import AuthCallback from './views/auth/callback';
@@ -62,14 +61,6 @@ function AppRoutes() {
         element={
           <RequireAuth>
             <Dashboard />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/chat"
-        element={
-          <RequireAuth>
-            <ChatPage />
           </RequireAuth>
         }
       />

@@ -1,28 +1,51 @@
 import { supabase } from './supabaseClient';
 
-export async function saveJournalEntry(entry: string) {
+export async function saveJournalEntry(entry: string, entryId?: string) {
   try {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) throw new Error('No authenticated user found');
 
-    const { data, error } = await supabase
-      .from('journal_entries')
-      .insert({
-        user_id: userData.user.id,
-        content: entry
-      })
-      .select()
-      .single();
+    if (entryId) {
+      // Update existing entry
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .update({
+          content: entry,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', entryId)
+        .eq('user_id', userData.user.id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Save error details:', error);
-      throw new Error(`Failed to save: ${error.message}`);
+      if (error) {
+        console.error('Update error details:', error);
+        throw new Error(`Failed to update: ${error.message}`);
+      }
+
+      return { data, error: null };
+    } else {
+      // Create new entry
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .insert({
+          user_id: userData.user.id,
+          content: entry,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Save error details:', error);
+        throw new Error(`Failed to save: ${error.message}`);
+      }
+
+      return { data, error: null };
     }
-
-    return data;
   } catch (error) {
-    console.error('Save error:', error);
-    throw error;
+    console.error('Save/Update error:', error);
+    return { data: null, error };
   }
 }
 
