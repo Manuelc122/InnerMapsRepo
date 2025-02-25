@@ -5,6 +5,7 @@ import { store } from './store/store';
 import './styles/markdown.css';
 import { LandingPage } from './views/LandingPage';
 import { Dashboard } from './views/Dashboard';
+import { CoachChat } from './views/CoachChat';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 import { useAuth } from './state-management/AuthContext';
 import { AppLayout } from './components/Layout/AppLayout';
@@ -61,6 +62,14 @@ function AppRoutes() {
         element={
           <RequireAuth>
             <Dashboard />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/coach"
+        element={
+          <RequireAuth>
+            <CoachChat />
           </RequireAuth>
         }
       />

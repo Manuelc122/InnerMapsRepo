@@ -1,5 +1,5 @@
 import React from 'react';
-import { Book, Brain } from 'lucide-react';
+import { Book, MessageSquare } from 'lucide-react';
 
 interface Tab {
   id: string;
@@ -15,7 +15,7 @@ interface TabViewProps {
 
 const tabs: Tab[] = [
   { id: 'journal', label: 'Journal', icon: Book },
-  { id: 'insights', label: 'Insights', icon: Brain }
+  { id: 'coach', label: 'Coach Chat', icon: MessageSquare }
 ];
 
 export function TabView({ activeTab, onTabChange, children }: TabViewProps) {

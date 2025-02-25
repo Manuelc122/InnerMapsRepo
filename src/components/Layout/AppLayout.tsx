@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
 import { useAuth } from '../../state-management/AuthContext';
-import { Settings } from 'lucide-react';
+import { Settings, Book, MessageSquare } from 'lucide-react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -28,7 +28,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       : 'text-gray-500 hover:border-b-2 hover:border-gray-300 hover:text-gray-700'
                   }`}
                 >
+                  <Book className="w-4 h-4 mr-2" />
                   Journal
+                </Link>
+                <Link
+                  to="/coach"
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                    isActive('/coach')
+                      ? 'border-b-2 border-[#4461F2] text-gray-900'
+                      : 'text-gray-500 hover:border-b-2 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Coach Chat
                 </Link>
               </div>
             </div>

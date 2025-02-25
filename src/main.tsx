@@ -4,6 +4,10 @@ import { AuthProvider } from './state-management/AuthContext';
 import { LanguageProvider } from './state-management/LanguageContext';
 import App from './App';
 import './index.css';
+import { logEnvironmentVariables } from './utils/envLogger';
+
+// Log environment variables to console for debugging
+logEnvironmentVariables();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
