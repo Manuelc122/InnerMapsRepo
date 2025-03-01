@@ -6,6 +6,36 @@
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-10.18.0-purple.svg)](https://www.framer.com/motion/)
 [![Supabase](https://img.shields.io/badge/Supabase-2.39.0-green.svg)](https://supabase.io/)
 
+## 🧭 The InnerMaps Journey: Navigating Your Inner Landscape
+
+Just as explorers use maps to navigate unfamiliar territories, **InnerMaps** provides you with the tools to chart and navigate your inner emotional landscape. In a world where we're taught how to understand the external world but rarely given guidance on understanding ourselves, InnerMaps serves as your personal guide to emotional intelligence and self-discovery.
+
+### The Cartography of Consciousness
+
+Traditional maps help us understand physical terrain—mountains, rivers, cities, and roads. Similarly, InnerMaps helps you identify and understand your emotional terrain:
+
+- **Emotional Peaks and Valleys**: Recognize patterns in your moods and emotional responses
+- **Rivers of Thought**: Track how your thoughts flow and connect over time
+- **Landmarks of Experience**: Identify significant events and their impact on your mental landscape
+- **Paths of Growth**: Discover routes toward better mental health and emotional resilience
+
+### Why Mental Mapping Matters
+
+In today's fast-paced world, many of us experience emotional turbulence without understanding its origins or patterns. Without a map, we can feel lost in our own minds. InnerMaps addresses this fundamental human need by:
+
+- **Building Self-Awareness**: Helping you recognize emotional patterns you may never have noticed
+- **Fostering Emotional Intelligence**: Teaching you to name, understand, and regulate your emotions
+- **Promoting Mental Health**: Providing early warning signs of emotional distress
+- **Empowering Personal Growth**: Giving you agency over your emotional development
+
+### The Science Behind the Journey
+
+InnerMaps combines the latest research in cognitive behavioral therapy, positive psychology, and neuroscience with cutting-edge AI technology. This powerful combination creates a personalized experience that grows more insightful the more you use it—like a map that becomes more detailed with each expedition.
+
+By journaling regularly and engaging with your AI coach, you're not just recording thoughts—you're actively participating in your own emotional education and mental health maintenance.
+
+---
+
 InnerMaps is a sophisticated mental health journaling platform that combines the power of AI with personal journaling to provide users with deep insights into their emotional well-being. The application features an intelligent chat interface, mood tracking, and comprehensive analytics to help users better understand their mental health patterns.
 
 ## 🌟 Key Features
@@ -14,21 +44,71 @@ InnerMaps is a sophisticated mental health journaling platform that combines the
 - **AI-Enhanced Journal Entries**: Contextual analysis of journal entries to identify patterns and emotions
 - **Mood Tracking**: Track your daily mood with an intuitive interface
 - **Rich Text Formatting**: Support for markdown formatting including bold, headers, and bullet points
+- **Voice Recording**: Dictate journal entries with automatic transcription
 
-### 2. Intelligent Chat Interface
+### 2. Intelligent Coach Chat
 - **Context-Aware AI Assistant**: Chatbot that references your previous journal entries for personalized support
-- **Natural Language Processing**: Advanced text processing for better understanding of user intent
+- **Memory Integration**: Leverages memories generated from journal entries to provide relevant guidance
+- **Conversation Management**: Create and manage multiple chat sessions
 - **Markdown Support**: Rich text formatting in chat messages for better expression
 
-### 3. Analytics Dashboard
-- **Mood Pattern Analysis**: Visual representations of mood trends over time
-- **Interactive Charts**: Powered by Recharts for comprehensive data visualization
-- **Insight Generation**: AI-powered analysis of journaling patterns and emotional trends
+### 3. Memory Management
+- **AI-Generated Memories**: Automatically extracts insights from journal entries and conversations
+- **Memory Organization**: Pin, archive, and delete memories as needed
+- **Semantic Search**: Find relevant memories based on content similarity
+- **Memory Quota**: Track and manage memory usage with visual indicators
 
 ### 4. Security & Privacy
 - **Secure Authentication**: Powered by Supabase for reliable user authentication
 - **Data Encryption**: Secure storage of sensitive user information
 - **Private Journaling**: Personal space that's completely private and secure
+
+## 📱 Core Application Tabs
+
+### Journal Tab
+The Journal tab provides a personal journaling system where users can record, save, and review their thoughts and experiences.
+
+**Key Features:**
+- **Entry Creation and Editing**: Create new entries or edit existing ones with a clean, distraction-free interface
+- **Entry Management**: Browse past entries chronologically with search functionality
+- **Voice Recording**: Dictate entries using the built-in voice recorder with automatic transcription
+- **Personalization**: Interface adapts to display the user's name for a more personal experience
+
+**Technical Implementation:**
+- Implemented in `src/views/Dashboard.tsx`
+- Uses `saveJournalEntry` and `deleteJournalEntry` utilities for data persistence
+- Stores entries in the `journal_entries` table in Supabase
+- Automatically generates memories from journal entries for AI analysis
+
+### Coach Chat Tab
+The Coach Chat tab provides an AI coaching experience that leverages the user's journal entries to offer personalized guidance and insights.
+
+**Key Features:**
+- **Chat Sessions**: Create and manage multiple conversation threads
+- **AI-Powered Responses**: Utilizes OpenAI's GPT models for intelligent, context-aware responses
+- **Memory Integration**: Incorporates relevant memories from journal entries into conversations
+- **Conversation History**: Maintains a complete history of all interactions for continuity
+
+**Technical Implementation:**
+- Implemented in `src/views/CoachChat.tsx`
+- Uses `getRelevantMemories` to retrieve memories related to the conversation context
+- Stores chat sessions in the `chat_sessions` table and messages in the `chat_messages` table
+- Supports markdown formatting for rich text responses
+
+### Memory Manager Tab
+The Memory Manager tab allows users to view, organize, and manage the AI-generated memories derived from their journal entries and chat conversations.
+
+**Key Features:**
+- **Memory Display**: View memories in a card-based interface with summaries and source information
+- **Memory Actions**: Pin important memories, archive less relevant ones, or delete as needed
+- **Memory Search**: Find specific memories using semantic search capabilities
+- **Memory Quota**: Visual representation of memory usage with warnings when approaching limits
+
+**Technical Implementation:**
+- Implemented in `src/components/Memory/MemoryManager.tsx`
+- Uses `memoryService.ts` for memory retrieval, creation, and management
+- Stores memories in the `coach_memories` table with a limit of 150 memories per user
+- Supports automatic generation of memory summaries using AI
 
 ## 🚀 Technology Stack
 
@@ -37,9 +117,8 @@ InnerMaps is a sophisticated mental health journaling platform that combines the
 - **State Management**: React Context API
 - **Authentication**: Supabase Auth
 - **Database**: Supabase PostgreSQL
-- **AI Integration**: Custom AI implementation with advanced NLP
+- **AI Integration**: OpenAI API with GPT-4o-mini model
 - **Animations**: Framer Motion
-- **Charts**: Recharts
 - **Build Tool**: Vite
 
 ## 💻 Local Development
@@ -66,7 +145,8 @@ InnerMaps is a sophisticated mental health journaling platform that combines the
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_DEEPSEEK_API_KEY=your_ai_api_key
+   VITE_OPENAI_API_KEY=your_openai_api_key
+   VITE_WOMPI_PUBLIC_KEY=your_wompi_public_key
    ```
 
 4. Start the development server:
@@ -92,31 +172,54 @@ The application is deployed and accessible at [https://innermaps.co](https://inn
 ```
 src/
 ├── components/          # Reusable UI components
-├── views/              # Page components
-├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-├── state-management/   # Context and state management
-├── theme/             # Theme configuration
-├── interfaces/        # TypeScript interfaces
-└── custom-hooks/     # Additional custom hooks
+│   ├── Memory/          # Memory management components
+│   ├── Profile/         # User profile components
+│   ├── shared/          # Shared UI components
+│   └── subscription/    # Subscription management components
+├── views/               # Page components
+│   ├── Dashboard.tsx    # Journal tab implementation
+│   ├── CoachChat.tsx    # Coach Chat tab implementation
+│   └── MemoryDiagnostic.tsx # Memory diagnostics view
+├── utils/               # Utility functions
+│   ├── journal.ts       # Journal entry utilities
+│   └── memory/          # Memory management utilities
+├── state-management/    # Context and state management
+│   ├── AuthContext.tsx  # Authentication context
+│   ├── UserNameContext.tsx # User name context
+│   └── SubscriptionContext.tsx # Subscription context
+├── services/            # Service integrations
+│   └── paymentService.ts # Payment processing service
+├── interfaces/          # TypeScript interfaces
+└── custom-hooks/        # Custom React hooks
 ```
 
-## 🔑 Core Components
+## 🔄 Data Flow Between Components
 
-### ChatMessage Component
-- Handles message formatting and display
-- Supports markdown and custom formatting
-- Integrates with AI context processing
+The three main tabs work together to create a cohesive experience:
 
-### Journal Analytics
-- Processes journal entries for patterns
-- Generates mood analytics
-- Creates visual representations of data
+1. **Journal → Memory**: 
+   - Journal entries trigger memory creation
+   - Memories extract insights from journal entries
+   - The system has a limit of 150 memories per user
 
-### Authentication Flow
-- Manages user sessions
-- Handles secure login/logout
-- Protects private routes
+2. **Memory → Coach Chat**:
+   - Coach Chat uses memories to provide personalized guidance
+   - Relevant memories are retrieved based on conversation context
+   - Pinned memories are prioritized in the retrieval process
+
+3. **Coach Chat → Memory**:
+   - Important insights from chat conversations can become memories
+   - Chat sessions provide context for memory retrieval
+   - The AI coach references memories to maintain continuity
+
+## 📊 Database Structure
+
+- **journal_entries**: Stores user journal entries
+- **chat_sessions**: Stores chat session metadata
+- **chat_messages**: Stores individual messages in chats
+- **coach_memories**: Stores AI-generated memories
+- **profiles**: Stores user profile information
+- **subscriptions**: Stores user subscription information
 
 ## 📝 License
 
