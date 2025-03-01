@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
+import { getRelevantMemories, generateMemorySummary, updateExistingSummariesWithName } from '../utils/memory/memoryService';
+import { useUserName } from '../state-management/UserNameContext';
 
 interface Message {
   id: string;
@@ -24,7 +26,8 @@ interface ChatSession {
 }
 
 export function CoachChat() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const { firstName } = useUserName();
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -34,6 +37,7 @@ export function CoachChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const [isUpdatingSummaries, setIsUpdatingSummaries] = useState(false);
 
   // Fetch chat sessions on component mount
   useEffect(() => {
@@ -175,74 +179,74 @@ export function CoachChat() {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || isLoading || !user) {
-      console.log("Message validation failed:", { 
-        messageEmpty: !message.trim(), 
-        isLoading, 
-        userMissing: !user 
-      });
-      return;
-    }
-    
-    // Debug user authentication
-    console.log("Current user:", user);
-    console.log("User ID:", user.id);
-    
-    // Set loading state early
-    setIsLoading(true);
-    
-    // Create a new chat if there's no active chat
-    let chatId = activeChatId;
-    if (!chatId) {
-      console.log("No active chat, creating new chat");
-      const newChatId = await createNewChat();
-      
-      if (!newChatId) {
-        console.error("Failed to create new chat");
-        setIsLoading(false);
-        return;
-      }
-      
-      chatId = newChatId;
-      console.log("New chat created with ID:", chatId);
-      
-      // Wait a moment for the chat creation to propagate to the database
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    console.log("Using chat ID:", chatId);
-    const isFirstMessage = messages.length === 0;
-    
-    // Add user message to UI immediately
-    const userMessage: Message = {
-      id: uuidv4(),
-      content: message,
-      role: 'user',
-      created_at: new Date().toISOString(),
-      chat_id: chatId
-    };
-    
-    console.log("Sending message:", userMessage);
-    
-    setMessages(prev => [...prev, userMessage]);
-    setMessage('');
+  // Function to save conversation to the database
+  const saveConversation = async (messagesToSave: Message[]) => {
+    if (!user) return;
     
     try {
-      // Verify the chat session exists before inserting a message
-      const { data: chatExists, error: chatCheckError } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('id', chatId)
-        .single();
-      
-      if (chatCheckError || !chatExists) {
-        console.error("Chat session does not exist:", chatCheckError);
-        throw new Error(`Chat session with ID ${chatId} does not exist`);
+      // Save each message that doesn't have a chat_id yet
+      for (const msg of messagesToSave) {
+        if (!msg.chat_id) {
+          const { error } = await supabase
+            .from('chat_messages')
+            .insert({
+              ...msg,
+              chat_id: activeChatId,
+              created_at: msg.created_at || new Date().toISOString()
+            });
+          
+          if (error) {
+            console.error("Error saving message:", error);
+          }
+        }
       }
       
-      console.log("Verified chat session exists:", chatExists);
+      // Update chat session timestamp
+      if (activeChatId) {
+        await supabase
+          .from('chat_sessions')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', activeChatId);
+      }
+    } catch (error) {
+      console.error("Error saving conversation:", error);
+    }
+  };
+
+  const handleSendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading || !user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Create a new chat if there's no active chat
+      let chatId = activeChatId;
+      if (!chatId) {
+        console.log("No active chat, creating new chat");
+        const newChatId = await createNewChat();
+        
+        if (!newChatId) {
+          console.error("Failed to create new chat");
+          setIsLoading(false);
+          return;
+        }
+        
+        chatId = newChatId;
+        console.log("New chat created with ID:", chatId);
+      }
+      
+      // Add user message to the conversation
+      const userMessage: Message = {
+        id: uuidv4(),
+        content: messageText,
+        role: 'user',
+        created_at: new Date().toISOString(),
+        chat_id: chatId
+      };
+      
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setMessage('');
       
       // Save user message to database
       const { error: saveError } = await supabase
@@ -251,7 +255,6 @@ export function CoachChat() {
       
       if (saveError) {
         console.error("Error saving message:", saveError);
-        throw saveError;
       }
       
       // Update chat session timestamp
@@ -265,34 +268,69 @@ export function CoachChat() {
       }
       
       // If this is the first message, update the chat title
-      if (isFirstMessage) {
-        await updateChatTitle(chatId, message);
+      if (messages.length === 0) {
+        await updateChatTitle(chatId, messageText);
       }
       
-      // Fetch recent journal entries for context
-      const { data: journalEntries, error: journalError } = await supabase
-        .from('journal_entries')
-        .select('content, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Fetch relevant memories for context
+      let relevantMemoriesForContext: any[] = [];
+      try {
+        console.log('Fetching relevant memories for context...');
+        const { data: memoryData, error: memoryError } = await getRelevantMemories(user.id, messageText, 3);
+        
+        if (memoryError) {
+          console.warn('Error fetching relevant memories, continuing without memories:', memoryError);
+        } else if (memoryData && memoryData.length > 0) {
+          console.log(`Found ${memoryData.length} relevant memories`);
+          relevantMemoriesForContext = memoryData;
+        } else {
+          console.log('No relevant memories found');
+        }
+      } catch (memoryError) {
+        console.warn('Exception when fetching memories, continuing without memories:', memoryError);
+      }
       
-      if (journalError) throw journalError;
+      // Generate memory context from relevant memories
+      let memoryContext = "No relevant memories available.";
+      if (relevantMemoriesForContext.length > 0) {
+        memoryContext = relevantMemoriesForContext.map(memory => {
+          const source = memory.source_type === 'journal_entry' ? 'Journal' : 'Chat';
+          const date = new Date(memory.created_at).toLocaleDateString();
+          
+          // Use summary if available, otherwise use content
+          let content = memory.summary || memory.content;
+          
+          // If we have a first name and the memory has a summary that doesn't include it,
+          // we'll note that it should be updated (actual update happens elsewhere)
+          if (firstName && memory.summary && !memory.summary.includes(firstName)) {
+            console.log(`Memory ${memory.id} summary doesn't include first name, should be updated`);
+          }
+          
+          return `[${source} ${date}] ${content}`;
+        }).join('\n\n');
+      }
       
-      // Prepare journal context
-      const journalContext = journalEntries && journalEntries.length > 0
-        ? `Recent journal entries:\n${journalEntries
-            .map(entry => `[${new Date(entry.created_at).toLocaleDateString()}] ${entry.content.substring(0, 200)}${entry.content.length > 200 ? '...' : ''}`)
-            .join('\n\n')}`
-        : 'No recent journal entries available.';
+      // If no specific memories are relevant, get a general summary
+      if (relevantMemoriesForContext.length === 0) {
+        const { summary, error: summaryError } = await generateMemorySummary(user.id);
+        if (!summaryError && summary) {
+          memoryContext = summary;
+        }
+      }
       
-      // Prepare conversation history
+      // Prepare conversation history with enhanced personalization
+      const userNameInstruction = firstName 
+        ? `The user's name is ${firstName}. Always refer to them by their first name (${firstName}) rather than using generic terms like "you" or "the user". Make the conversation feel personal by using their name naturally throughout your responses.`
+        : '';
+      
       const conversationHistory = [
         {
           role: "system",
           content: `You are a highly skilled coach and clinical psychologist with a PhD, specializing in emotional intelligence, self-awareness, and personal growth. Your role is to help the user understand their emotions, gain insights about themselves, and develop strategies for personal growth.
 
-Use the user's journal entries as context to provide personalized guidance. Be empathetic, insightful, and supportive. Ask thoughtful questions that promote self-reflection. Provide evidence-based strategies when appropriate.
+${userNameInstruction}
+
+Use the user's journal entries and memories as context to provide personalized guidance. Be empathetic, insightful, and supportive. Ask thoughtful questions that promote self-reflection. Provide evidence-based strategies when appropriate.
 
 Remember to:
 - Maintain a warm, supportive tone
@@ -301,22 +339,18 @@ Remember to:
 - Ask open-ended questions that encourage deeper reflection
 - Suggest practical strategies for personal growth
 - Respect the user's autonomy and avoid being prescriptive
+${firstName ? `- Address the user as "${firstName}" at least once in each response` : ''}
 
-Journal Context:
-${journalContext}`
+Memory Context:
+${memoryContext}`
         },
         // Add recent conversation history
-        ...messages.map(msg => ({
+        ...updatedMessages.map(msg => ({
           role: msg.role as "user" | "assistant" | "system",
           content: msg.content
-        })),
-        // Add current message
-        {
-          role: "user",
-          content: message
-        }
+        }))
       ];
-
+      
       // Call OpenAI API
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -331,49 +365,49 @@ ${journalContext}`
           max_tokens: 1000
         })
       });
-
-      const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to get response from AI');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
       }
       
-      if (data.choices && data.choices[0]?.message) {
-        // Add AI response to UI
-        const aiMessage: Message = {
-          id: uuidv4(),
-          content: data.choices[0].message.content,
-          role: 'assistant',
-          created_at: new Date().toISOString(),
-          chat_id: chatId
-        };
-        
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // Save AI message to database
-        await supabase
-          .from('chat_messages')
-          .insert(aiMessage);
-        
-        // Update chat session timestamp
-        await supabase
-          .from('chat_sessions')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', chatId);
-      }
-    } catch (error) {
-      console.error('Error in chat flow:', error);
+      const data = await response.json();
       
-      // Add error message to UI
-      const errorMessage: Message = {
+      // Extract assistant response
+      const assistantResponse = data.choices[0].message.content;
+      
+      // Create assistant message
+      const assistantMessage: Message = {
         id: uuidv4(),
-        content: "I'm sorry, I encountered an error. Please try again.",
+        content: assistantResponse,
         role: 'assistant',
         created_at: new Date().toISOString(),
         chat_id: chatId
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      // Add assistant message to UI
+      setMessages([...updatedMessages, assistantMessage]);
+      
+      // Save assistant message to database
+      const { error: saveAssistantError } = await supabase
+        .from('chat_messages')
+        .insert(assistantMessage);
+      
+      if (saveAssistantError) {
+        console.error("Error saving assistant message:", saveAssistantError);
+      }
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Add an error message to the conversation
+      const errorMessage: Message = {
+        id: uuidv4(),
+        content: "I'm sorry, I encountered an error processing your message. Please try again.",
+        role: 'assistant',
+        created_at: new Date().toISOString(),
+        chat_id: activeChatId || ''
+      };
+      setMessages([...messages, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -425,6 +459,45 @@ ${journalContext}`
       setChatToDelete(null);
     }
   };
+
+  // Update the checkAndUpdateSummaries function to use firstName from context
+  const checkAndUpdateSummaries = async () => {
+    if (!user || isUpdatingSummaries || !firstName) return;
+    
+    try {
+      setIsUpdatingSummaries(true);
+      console.log(`Checking if summaries need personalization with user's first name: ${firstName}`);
+      
+      // Run the update in the background
+      updateExistingSummariesWithName(user.id)
+        .then(result => {
+          console.log("Summary personalization result:", result);
+          if (result.success) {
+            console.log(`✅ Personalization complete. ${result.updatedCount} summaries now include the name "${firstName}"`);
+          }
+        })
+        .catch(error => {
+          console.error("Error personalizing summaries:", error);
+        });
+      
+    } catch (error) {
+      console.error("Error in checkAndUpdateSummaries:", error);
+    } finally {
+      setIsUpdatingSummaries(false);
+    }
+  };
+
+  // Call the function when the component mounts
+  useEffect(() => {
+    if (user && !loading && !isUpdatingSummaries && firstName) {
+      // Add a small delay to ensure auth is fully loaded
+      const timer = setTimeout(() => {
+        checkAndUpdateSummaries();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, loading, firstName]);
 
   return (
     <div className="h-[calc(100vh-64px)] flex">
@@ -499,13 +572,17 @@ ${journalContext}`
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
                 <MessageSquare className="w-6 h-6 text-blue-500" />
               </div>
-              <h3 className="text-base font-bold text-gray-800 mb-1">Welcome to Coach Chat</h3>
+              <h3 className="text-base font-bold text-gray-800 mb-1">
+                {firstName ? `Welcome, ${firstName}!` : 'Welcome to Coach Chat'}
+              </h3>
               <p className="text-gray-600 max-w-md mb-4 text-sm">
-                Your personal AI coach that understands your journal entries and helps you gain insights about yourself.
+                {firstName 
+                  ? `I'm your personal AI coach, and I'm here to help you gain insights about yourself, ${firstName}. I've been learning from your journal entries to provide personalized guidance.`
+                  : 'Your personal AI coach that understands your journal entries and helps you gain insights about yourself.'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-lg">
                 {[
-                  "How am I doing emotionally based on my journal?",
+                  firstName ? `How am I feeling today, ${firstName}?` : "How am I doing emotionally based on my journal?",
                   "What patterns do you notice in my thinking?",
                   "Help me understand why I feel anxious lately",
                   "What strategies could help me with work-life balance?"
@@ -557,7 +634,7 @@ ${journalContext}`
         {/* Message Input - Fixed at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-[60px] bg-gradient-to-t from-white via-white/95 to-white/50 backdrop-blur-sm border-t border-gray-200">
           <div className="h-full flex items-center px-4">
-            <form onSubmit={handleSendMessage} className="w-full flex items-center gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(message); }} className="w-full flex items-center gap-2">
               <input
                 type="text"
                 value={message}

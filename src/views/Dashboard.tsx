@@ -5,6 +5,7 @@ import { saveJournalEntry, deleteJournalEntry } from '../utils/journal';
 import { supabase } from '../utils/supabaseClient';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
 import { VoiceRecorder } from '../components/VoiceRecorder';
+import { useUserName } from '../state-management/UserNameContext';
 
 interface JournalEntry {
   readonly id: string;
@@ -14,6 +15,7 @@ interface JournalEntry {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const { firstName } = useUserName();
   const [entry, setEntry] = useState<string>('');
   const [pastEntries, setPastEntries] = useState<readonly JournalEntry[]>([]);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -127,7 +129,9 @@ export function Dashboard() {
       <div className="w-80 border-r border-gray-200 bg-white/80 backdrop-blur-sm p-6 relative z-10">
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold gradient-text">My Journal</h1>
+            <h1 className="text-2xl font-bold gradient-text">
+              {firstName ? `${firstName}'s Journal` : 'My Journal'}
+            </h1>
             <p className="text-sm text-gray-500">Record your daily thoughts</p>
           </div>
 
@@ -182,6 +186,7 @@ export function Dashboard() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold gradient-text">
+                {firstName ? `${firstName}'s Entry - ` : ''}
                 {selectedEntry ? formatDate(selectedEntry.created_at) : formatDate(new Date().toISOString())}
               </h2>
               {selectedEntry && (
@@ -204,7 +209,7 @@ export function Dashboard() {
                 <textarea
                   value={entry}
                   onChange={(e) => setEntry(e.target.value)}
-                  placeholder="Write about your day..."
+                  placeholder={firstName ? `What's on your mind today, ${firstName}?` : "Write about your day..."}
                   className="w-full h-[calc(100vh-300px)] p-4 bg-white/50 rounded-xl border-0 focus:ring-0 text-gray-700 resize-none"
                   style={{ outline: 'none' }}
                 />

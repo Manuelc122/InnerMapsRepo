@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  memory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.memory-service
+    container_name: innermaps-memory-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - VITE_OPENAI_API_KEY=${VITE_OPENAI_API_KEY}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 

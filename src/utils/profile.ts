@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { withAuth } from './api';
-import type { UserProfile, ProfileFormData } from '../types/profile';
+import type { UserProfile, ProfileFormData } from '../interfaces/profile';
 
 export async function getProfile(): Promise<UserProfile | null> {
   return withAuth(async (userId) => {
@@ -19,6 +19,8 @@ export async function getProfile(): Promise<UserProfile | null> {
       id: data.id,
       userId: data.user_id,
       fullName: data.full_name,
+      firstName: data.first_name || data.full_name?.split(' ')[0] || null,
+      lastName: data.last_name || (data.full_name?.split(' ').slice(1).join(' ') || null),
       birthdate: data.birthdate ? new Date(data.birthdate) : null,
       country: data.country,
       createdAt: new Date(data.created_at),
@@ -34,6 +36,8 @@ export async function updateProfile(profile: ProfileFormData): Promise<void> {
       .upsert({
         user_id: userId,
         full_name: profile.fullName,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
         birthdate: profile.birthdate,
         country: profile.country,
         updated_at: new Date().toISOString()
