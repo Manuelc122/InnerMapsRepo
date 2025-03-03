@@ -15,11 +15,12 @@ const customStyles = `
     border-radius: 50%;
     background: linear-gradient(135deg, #6C63FF 0%, #9D4EDD 100%);
     flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(108, 99, 255, 0.3);
   }
 
   .wordmark {
     font-family: 'Montserrat', sans-serif;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: -0.02em;
     position: relative;
     display: flex;

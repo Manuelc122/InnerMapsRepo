@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../shared/Logo';
 import { useAuth } from '../../state-management/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../state-management/LanguageContext';
 
 // Add CSS for animations and full-screen background
 const customStyles = `
@@ -148,6 +149,7 @@ export function HeroSection() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const { signInWithEmail } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Add the animation styles to the document head
@@ -474,7 +476,7 @@ export function HeroSection() {
               className="mb-4"
             >
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-tight text-white" style={{ textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)' }}>
-                <span className="text-shimmer">Journaling Reimagined:</span> <span className="block md:inline">Your Path to Emotional Clarity</span>
+                <span className="text-shimmer">{t('hero.title')}</span>
               </h1>
             </motion.div>
             
@@ -486,8 +488,7 @@ export function HeroSection() {
               className="mb-10"
             >
               <p className="text-xl md:text-2xl text-[#F0F0F0] max-w-4xl mx-auto leading-relaxed" style={{ textShadow: '0 1px 5px rgba(0, 0, 0, 0.1)' }}>
-                Discover the power of AI-guided journaling<br />
-                to understand your emotions and transform your inner world.
+                {t('hero.subtitle')}
               </p>
             </motion.div>
             
@@ -506,7 +507,7 @@ export function HeroSection() {
                 }}
               >
                 <span className="relative z-10 flex items-center">
-                  Start Your Journey Today
+                  {t('hero.cta')}
                   <ArrowRight className="ml-3 w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#FF8F6B] to-[#FF6B35] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -515,7 +516,7 @@ export function HeroSection() {
               {/* Smaller, less prominent security note with enhanced styling */}
               <div className="flex items-center gap-2 text-white/90 mt-6 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-medium">Secure & Private</span>
+                <span className="text-sm font-medium">{t('hero.trust')}</span>
               </div>
             </motion.div>
           </div>
