@@ -8,12 +8,15 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const translations = {
+// Define a type for the translations
+type TranslationDictionary = Record<string, string>;
+
+const translations: Record<Language, TranslationDictionary> = {
   en: {
-    'hero.title': 'The AI Journal That Reads Between Your Lines',
-    'hero.subtitle': '5 minutes of daily journaling → Lifetime of personal insights',
-    'hero.cta': 'Start Your Free Journey',
-    'hero.trust': 'Trusted by psychologists, life coaches, and 10,000+ growth seekers',
+    'hero.title': 'Journaling Reimagined: Your Path to Emotional Clarity',
+    'hero.subtitle': 'Discover the power of AI-guided journaling to understand your emotions, track your growth, and transform your inner world.',
+    'hero.cta': 'Start Your Journey Today',
+    'hero.trust': 'Secure & Private',
     'showcase.title': 'Experience Your Personal Growth Journey',
     'showcase.subtitle': 'See how InnerMaps transforms your daily reflections into meaningful insights',
     'showcase.trust': '🔒 Bank-grade security • GDPR Compliant • 99.9% Uptime',
@@ -39,32 +42,32 @@ const translations = {
     'pricing.badge': 'BEST VALUE'
   },
   es: {
-    'hero.title': 'El Diario con IA que Lee Entre Líneas',
-    'hero.subtitle': '5 minutos de escritura diaria → Una vida de insights personales',
-    'hero.cta': 'Comienza Tu Viaje Gratis',
-    'hero.trust': 'Confiado por psicólogos, coaches y más de 10,000 personas',
+    'hero.title': 'Diario Reimaginado: Tu Camino a la Claridad Emocional',
+    'hero.subtitle': 'Descubre el poder del diario guiado por IA para entender tus emociones, seguir tu crecimiento y transformar tu mundo interior.',
+    'hero.cta': 'Comienza Tu Viaje Hoy',
+    'hero.trust': 'Seguro y Privado',
     'showcase.title': 'Experimenta Tu Viaje de Crecimiento Personal',
     'showcase.subtitle': 'Descubre cómo InnerMaps transforma tus reflexiones diarias',
     'showcase.trust': '🔒 Seguridad bancaria • GDPR • 99.9% Disponibilidad',
     'showcase.journal.title': 'Escribe Libremente, Obtén Insights al Instante',
     'showcase.journal.subtitle': 'Nuestra IA te guía en tu viaje de autodescubrimiento',
-    'showcase.journal.feature1.title': 'Sugerencias Inteligentes',
-    'showcase.journal.feature1.description': 'Prompts generados por IA para reflexión profunda',
+    'showcase.journal.feature1.title': 'Prompts Inteligentes',
+    'showcase.journal.feature1.description': 'Prompts generados por IA que inspiran reflexión profunda',
     'showcase.journal.feature2.title': 'Análisis en Tiempo Real',
-    'showcase.journal.feature2.description': 'Obtén insights mientras escribes',
+    'showcase.journal.feature2.description': 'Obtén insights instantáneos mientras escribes',
     'showcase.journal.feature3.title': 'Seguimiento Emocional',
-    'showcase.journal.feature3.description': 'Monitorea tu bienestar emocional',
+    'showcase.journal.feature3.description': 'Monitorea tu bienestar emocional a lo largo del tiempo',
     'pricing.title': 'Precios Simples y Transparentes',
-    'pricing.subtitle': 'Elige el plan que mejor se adapte a tu viaje',
+    'pricing.subtitle': 'Elige el plan que mejor funcione para tu viaje de autodescubrimiento',
     'pricing.monthly.description': 'Perfecto para comenzar',
     'pricing.yearly.description': 'Ahorra 17% con facturación anual',
-    'pricing.feature.entries': 'Entradas ilimitadas',
+    'pricing.feature.entries': 'Entradas de diario ilimitadas',
     'pricing.feature.insights': 'Insights potenciados por IA',
     'pricing.feature.tracking': 'Seguimiento de progreso',
     'pricing.feature.support': 'Soporte prioritario',
     'pricing.feature.early_access': 'Acceso anticipado a nuevas funciones',
-    'pricing.cta.monthly': 'Comenzar Plan Mensual',
-    'pricing.cta.yearly': 'Comenzar Plan Anual',
+    'pricing.cta.monthly': 'Comenzar Mensual',
+    'pricing.cta.yearly': 'Comenzar Anual',
     'pricing.badge': 'MEJOR VALOR'
   }
 };

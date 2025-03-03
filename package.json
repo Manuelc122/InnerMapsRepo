@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "setup-api-key": "node scripts/prompt_api_key.js",
     "process-embeddings": "node scripts/process_embeddings_job.js",
     "start-cron": "node scripts/cron-job.js",
     "start-memory-service": "pm2 start scripts/cron-job.js --name memory-service",
