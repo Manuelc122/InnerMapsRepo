@@ -55,8 +55,8 @@ export function PricingSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-6 gradient-text px-4">
-            Simple, Transparent Pricing
+          <h1 className="text-5xl font-bold mb-6 gradient-text px-8">
+            Affordable Pricing
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Unlock your personal growth journey with our AI-powered journaling platform
