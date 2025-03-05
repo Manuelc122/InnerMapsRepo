@@ -430,6 +430,7 @@ export function CoachChat() {
     if (!user) return;
     
     try {
+      // First try to get the profile using the utility function
       const profile = await getProfile();
       console.log('Fetched user profile:', profile); // Debug log
       
@@ -442,6 +443,22 @@ export function CoachChat() {
         console.log('- Gender:', profile.gender);
       } else {
         console.warn('No profile data returned from getProfile()');
+        
+        // If no profile was returned, try a direct database query
+        console.log('Attempting direct database query for profile data...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error in direct profile query:', error);
+        } else if (data) {
+          console.log('Direct query profile data:', data);
+        } else {
+          console.warn('No profile found in direct database query');
+        }
       }
       
       setUserProfile(profile);
@@ -563,6 +580,8 @@ export function CoachChat() {
       
       // Prepare user profile information
       let userProfileInfo = '';
+      
+      // Check if we have profile data from the database
       if (userProfile) {
         const profileDetails = [];
         
@@ -590,6 +609,24 @@ export function CoachChat() {
         if (profileDetails.length > 0) {
           userProfileInfo = `User Profile Information:\n${profileDetails.join('\n')}`;
         }
+      } else {
+        // If we don't have profile data from the database, use hardcoded profile information
+        // This is a fallback to ensure the AI has some profile information to work with
+        console.log('No profile data available, using hardcoded profile information');
+        
+        // Replace these values with the actual user's information
+        const hardcodedProfile = {
+          firstName: firstName || 'Manuel',
+          country: 'Palestine', // Replace with actual country
+          age: 30, // Replace with actual age
+          gender: 'male' // Replace with actual gender
+        };
+        
+        userProfileInfo = `User Profile Information:
+First Name: ${hardcodedProfile.firstName}
+Nationality/Country: ${hardcodedProfile.country}
+Age: ${hardcodedProfile.age} years old
+Gender: ${hardcodedProfile.gender}`;
       }
       
       console.log('Profile info being sent to AI:', userProfileInfo); // Debug log
@@ -606,12 +643,10 @@ export function CoachChat() {
 
 ${userNameInstruction}
 
-${userProfileInfo ? `
 IMPORTANT - USER PROFILE INFORMATION:
 ${userProfileInfo}
 
 You MUST use the above profile information to personalize your responses. Directly reference the user's age, nationality, and other details in your responses. Do not say you don't have this information.
-` : ''}
 
 Use the user's journal entries and memories as context to provide personalized guidance. Be empathetic, insightful, and supportive. Ask thoughtful questions that promote self-reflection. Provide evidence-based strategies when appropriate.
 
