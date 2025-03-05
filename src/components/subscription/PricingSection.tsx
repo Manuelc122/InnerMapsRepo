@@ -4,12 +4,11 @@ import { Check, ArrowRight, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../state-management/AuthContext';
 
 const features = [
-  'Smart journaling with rich text formatting and mood tracking',
+  'Smart journaling with rich text formatting',
   'AI coach chat with personalized guidance and memory integration',
   'Automatic memory extraction and organization from your entries',
   'Semantic search to find relevant memories and insights',
-  'Voice-to-text transcription for natural expression',
-  'Complete data privacy and ownership'
+  'Voice-to-text transcription for natural expression'
 ];
 
 export function PricingSection() {
