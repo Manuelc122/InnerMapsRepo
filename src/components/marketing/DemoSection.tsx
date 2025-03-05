@@ -6,7 +6,7 @@ import {
   Target, Compass, Star,
   FileText, LineChart,
   Mic, Pause, Play,
-  LucideIcon, ChevronRight, ChevronLeft
+  LucideIcon, ChevronRight, ChevronLeft, Search
 } from 'lucide-react';
 import { JournalAnalytics } from './AppShowcase/JournalAnalytics';
 import { Link } from 'react-router-dom';
@@ -128,8 +128,8 @@ export function DemoSection() {
   const demoSteps: DemoStep[] = [
     {
       id: 1,
-      title: "Voice-to-Insight Journaling",
-      description: "Transform your spoken thoughts into structured insights with advanced emotion recognition and theme analysis",
+      title: "Smart Journaling",
+      description: "Record your thoughts with rich text formatting, track your mood, and use voice-to-text for effortless journaling",
       preview: (
         <div className="relative h-full w-full bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-4 mb-6">
@@ -137,10 +137,10 @@ export function DemoSection() {
               <Mic className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Voice Entry</h3>
+              <h3 className="text-lg font-semibold">Journal Entry</h3>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-emerald-600">Emotion detected: Contemplative</span>
-                <span className="text-sm text-blue-600">Clarity score: 87%</span>
+                <span className="text-sm text-emerald-600">Mood: Reflective</span>
+                <span className="text-sm text-blue-600">Format: Voice</span>
               </div>
             </div>
           </div>
@@ -169,68 +169,8 @@ export function DemoSection() {
     },
     {
       id: 2,
-      title: "Advanced Pattern Recognition",
-      description: "Uncover deep insights about your behaviors, thoughts, and growth opportunities through AI-powered analysis",
-      preview: (
-        <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Personal Growth Analysis</h3>
-              <p className="text-sm text-gray-500">Based on 28 journal entries</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Growth Trajectory</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Self-awareness</span>
-                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
-                    <div className="w-[85%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Decision clarity</span>
-                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
-                    <div className="w-[78%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Emotional balance</span>
-                  <div className="w-2/3 h-2 bg-blue-100 rounded-full overflow-hidden">
-                    <div className="w-[92%] h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Key Insights</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Strong correlation between morning reflection and productive days
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  Increased decision confidence after journaling sessions
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-500" />
-                  Growing emotional vocabulary and self-expression
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 3,
-      title: "Your Personal Growth Companion",
-      description: "Experience breakthrough moments with an AI that combines the wisdom of world-renowned psychologists with modern coaching techniques",
+      title: "Intelligent Coach Chat",
+      description: "Get personalized guidance from our AI coach that remembers your journal entries and provides context-aware support",
       preview: (
         <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-4 mb-6">
@@ -238,29 +178,92 @@ export function DemoSection() {
               <MessageSquare className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Growth Session</h3>
-              <p className="text-sm text-emerald-600">Breakthrough Insight</p>
+              <h3 className="text-lg font-semibold">Coach Chat</h3>
+              <p className="text-sm text-gray-500">Personalized guidance</p>
             </div>
           </div>
           <div className="space-y-4">
             <div className="flex justify-end">
               <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
-                <p className="text-sm">I've been working 60-hour weeks trying to prove myself, but lately I feel disconnected from everything that matters - my relationships, my health, even my sense of purpose. Everyone sees me as successful, but inside I feel like I'm just running on autopilot.</p>
+                <p className="text-sm">I've been working 60-hour weeks trying to prove myself, but lately I feel disconnected from everything that matters - my relationships, my health, even my sense of purpose.</p>
               </div>
             </div>
             <div className="flex">
               <div className="bg-gray-100 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-                <p className="text-sm">That disconnect between external success and inner fulfillment is something many high-achievers face. What would it mean to you to feel truly successful, beyond the metrics others use to measure it?</p>
+                <p className="text-sm">I notice in your journal entries from last week that you mentioned feeling overwhelmed at work. That disconnect between external success and inner fulfillment is something many high-achievers face. What would it mean to you to feel truly successful?</p>
               </div>
             </div>
             <div className="flex justify-end">
               <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
-                <p className="text-sm">I've never really thought about it that way... I guess true success would be feeling like I'm growing as a person, not just in my career. Having deep connections, being present for the moments that matter, and feeling like my work serves a greater purpose than just climbing the ladder.</p>
+                <p className="text-sm">I've never really thought about it that way... I guess true success would be feeling like I'm growing as a person, not just in my career.</p>
               </div>
             </div>
             <div className="flex">
               <div className="bg-gray-100 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-                <p className="text-sm">This is a powerful realization - you're describing success in terms of wholeness rather than achievement alone. What small step could you take this week to align your daily choices with this deeper definition of success?</p>
+                <p className="text-sm">This is a powerful realization. What small step could you take this week to align your daily choices with this deeper definition of success?</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 3,
+      title: "Memory Management",
+      description: "AI automatically extracts insights from your journal entries and conversations, creating memories you can organize and search",
+      preview: (
+        <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Memory Manager</h3>
+              <p className="text-sm text-emerald-600">28 memories generated</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Memories</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Work-life balance concerns</span>
+                  <div className="flex gap-2">
+                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Career growth reflections</span>
+                  <div className="flex gap-2">
+                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Family time priorities</span>
+                  <div className="flex gap-2">
+                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Memory Search</h4>
+              <div className="relative mb-4">
+                <input 
+                  type="text" 
+                  placeholder="Search memories..." 
+                  className="w-full p-2 pl-8 border rounded-lg text-sm"
+                />
+                <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
+              </div>
+              <div className="text-xs text-gray-500">
+                Memory quota: 28/150 used
+                <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
+                  <div className="w-[18%] h-full bg-green-500 rounded-full"></div>
+                </div>
               </div>
             </div>
           </div>

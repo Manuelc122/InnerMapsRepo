@@ -4,55 +4,57 @@ import { useInView } from 'react-intersection-observer';
 import { 
   Mic, Brain, Sparkles, MessageSquare, 
   LineChart, Shield, Clock, Heart,
-  Lightbulb, Zap, Fingerprint, Layers, Star
+  Lightbulb, Zap, Fingerprint, Layers, Star,
+  PenTool, Search, Archive, Lock
 } from 'lucide-react';
 
 const features = [
   {
-    icon: Mic,
-    title: "Voice Journaling",
-    description: "Speak your thoughts naturally with our advanced voice-to-text technology",
-    details: ["Emotion detection in voice", "Auto-punctuation", "Hands-free journaling"]
-  },
-  {
-    icon: Brain,
-    title: "AI-Powered Analysis",
-    description: "Uncover patterns and insights from your daily reflections",
-    details: ["Pattern recognition", "Emotional tracking", "Personal growth metrics"]
+    icon: PenTool,
+    title: "Smart Journaling",
+    description: "Record your thoughts with our AI-enhanced journaling system",
+    details: ["Rich text formatting", "Mood tracking", "Voice-to-text transcription", "Pattern recognition"]
   },
   {
     icon: MessageSquare,
-    title: "AI Life Coach",
-    description: "Get personalized guidance and support 24/7",
-    details: ["Contextual responses", "Growth-focused dialogue", "Custom action plans"]
+    title: "Intelligent Coach Chat",
+    description: "Get personalized guidance from our AI coach that remembers your history",
+    details: ["Context-aware responses", "Memory integration", "Multiple chat sessions", "Markdown support"]
+  },
+  {
+    icon: Brain,
+    title: "Memory Management",
+    description: "AI automatically extracts insights from your journal entries and conversations",
+    details: ["AI-generated memories", "Memory organization", "Semantic search", "Memory quota tracking"]
   },
   {
     icon: Shield,
-    title: "Privacy First",
-    description: "Enterprise-grade encryption keeps your thoughts secure",
-    details: ["End-to-end encryption", "Local processing", "Data sovereignty"]
+    title: "Security & Privacy",
+    description: "Your data is protected with enterprise-grade security",
+    details: ["Secure authentication", "Data encryption", "Private journaling", "Complete data ownership"]
+  },
+  {
+    icon: Search,
+    title: "Semantic Search",
+    description: "Find relevant memories and journal entries based on content similarity",
+    details: ["Natural language search", "Context-aware results", "Quick retrieval", "Comprehensive indexing"]
+  },
+  {
+    icon: Archive,
+    title: "Memory Organization",
+    description: "Organize your AI-generated memories for better insights",
+    details: ["Pin important memories", "Archive less relevant ones", "Delete as needed", "Categorization"]
   },
   {
     icon: Lightbulb,
-    title: "Smart Prompts",
-    description: "Get inspired with contextual journaling prompts",
-    details: ["Mood-based suggestions", "Growth challenges", "Reflection topics"]
-  },
-  {
-    icon: Layers,
-    title: "Rich Insights",
-    description: "Multi-layered analysis of your personal growth",
-    details: ["Thought patterns", "Behavioral trends", "Value alignment"]
-  },
-  {
-    icon: Star,
-    title: "Guided Reflection",
-    description: "Thoughtful prompts and questions to help you explore your thoughts and feelings more deeply."
+    title: "Personalized Insights",
+    description: "Gain deeper understanding of your emotional patterns and thought processes",
+    details: ["Emotional pattern recognition", "Behavioral trends", "Growth opportunities", "Self-awareness"]
   },
   {
     icon: Sparkles,
     title: "Personal Growth",
-    description: "Transform your daily reflections into actionable insights for continuous personal development."
+    description: "Transform your daily reflections into actionable insights for continuous personal development"
   }
 ];
 
