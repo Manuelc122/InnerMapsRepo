@@ -55,11 +55,11 @@ export function PricingSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4 gradient-text">
+          <h1 className="text-5xl font-bold mb-6 gradient-text px-4">
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Transform your self-reflection journey with our AI-powered journaling and coaching platform
+            Unlock your personal growth journey with our AI-powered journaling platform
           </p>
         </div>
 
@@ -183,7 +183,7 @@ export function PricingSection() {
 
               {/* Footer Text */}
               <p className="text-center text-gray-500 text-sm mt-6">
-                Gain deeper insights into your thoughts and patterns with AI-enhanced journaling
+                Discover meaningful patterns in your thoughts and experiences with InnerMaps
               </p>
             </div>
           </div>
