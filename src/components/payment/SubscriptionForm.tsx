@@ -754,7 +754,7 @@ export function SubscriptionForm({
             type="button"
             onClick={() => {
               // Use navigate instead of window.location to prevent full page reload
-              window.location.href = '/journal';
+              window.location.href = '/app/journal';
             }}
             className="bg-gradient-to-r from-[#6C63FF] to-[#9D4EDD] text-white py-2 px-6 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition shadow-sm flex items-center justify-center"
           >
