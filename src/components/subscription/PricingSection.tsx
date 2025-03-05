@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, ArrowRight, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../state-management/AuthContext';
-import { LegalAgreements } from '../auth/LegalAgreements';
 
 const features = [
   'Unlimited journal entries',
@@ -17,9 +16,6 @@ export function PricingSection() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSignIn, setIsSignIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showLegalAgreements, setShowLegalAgreements] = useState(false);
-  const [legalAgreementsAccepted, setLegalAgreementsAccepted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { signUpWithEmail, signInWithEmail } = useAuth();
   const navigate = useNavigate();
 
@@ -27,22 +23,11 @@ export function PricingSection() {
     e.preventDefault();
     setError(null);
     
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    
     try {
       if (isSignIn) {
         await signInWithEmail(email, password);
         navigate('/journal');
       } else {
-        // If signing up and legal agreements not yet accepted, show them first
-        if (!legalAgreementsAccepted) {
-          setShowLegalAgreements(true);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Only proceed with signup if legal agreements have been accepted
         const result = await signUpWithEmail(email, password, 'monthly');
         // Handle the redirect using React Router
         if (result.redirectTo) {
@@ -51,32 +36,12 @@ export function PricingSection() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${isSignIn ? 'sign in' : 'sign up'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleLegalAgreementsComplete = (accepted: boolean) => {
-    setLegalAgreementsAccepted(accepted);
-    setShowLegalAgreements(false);
-    
-    if (accepted) {
-      // Instead of calling signUpWithEmail directly, we'll submit the form
-      // This prevents duplicate signup attempts
-      setTimeout(() => {
-        const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-        if (submitButton) {
-          submitButton.click();
-        }
-      }, 100);
     }
   };
 
   const toggleAuthMode = () => {
     setIsSignIn(!isSignIn);
     setError(null);
-    setLegalAgreementsAccepted(false);
-    setShowLegalAgreements(false);
   };
 
   return (
@@ -119,7 +84,7 @@ export function PricingSection() {
               {/* Price */}
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center">
-                  <span className="text-5xl font-bold gradient-text">$10</span>
+                  <span className="text-5xl font-bold gradient-text">$12</span>
                   <span className="text-gray-500 ml-2">/month</span>
                 </div>
               </div>
@@ -157,13 +122,6 @@ export function PricingSection() {
                   >
                     Already have an account? Sign In
                   </button>
-                </div>
-              ) : showLegalAgreements ? (
-                <div className="py-2">
-                  <h3 className="text-xl font-bold text-center mb-4 bg-gradient-to-r from-[#4461F2] to-[#7E87FF] text-transparent bg-clip-text">
-                    Legal Agreements
-                  </h3>
-                  <LegalAgreements onComplete={handleLegalAgreementsComplete} />
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -204,41 +162,9 @@ export function PricingSection() {
                       required
                     />
                   </div>
-
-                  {!isSignIn && (
-                    <div className="flex items-start mt-4">
-                      <div className="flex items-center h-5">
-                        <input
-                          id="terms"
-                          type="checkbox"
-                          checked={legalAgreementsAccepted}
-                          onChange={(e) => setLegalAgreementsAccepted(e.target.checked)}
-                          className="w-4 h-4 border border-[#4461F2] rounded bg-white/50 focus:ring-3 focus:ring-[#4461F2]"
-                          required
-                        />
-                      </div>
-                      <div className="ml-3 text-sm">
-                        <label htmlFor="terms" className="text-gray-600">
-                          I agree to the{' '}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setShowLegalAgreements(true);
-                            }}
-                            className="text-[#4461F2] hover:underline font-medium"
-                          >
-                            Terms of Service and Privacy Policy
-                          </button>
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
                   <button
                     type="submit"
-                    disabled={!isSignIn && !legalAgreementsAccepted}
-                    className="w-full py-4 px-8 text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200 disabled:opacity-50"
+                    className="w-full py-4 px-8 text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200"
                   >
                     {isSignIn ? 'Sign In' : 'Start Journaling'}
                     <ArrowRight className="ml-2 w-5 h-5 inline-block" />
