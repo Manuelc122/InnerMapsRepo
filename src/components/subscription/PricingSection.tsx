@@ -4,10 +4,12 @@ import { Check, ArrowRight, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../state-management/AuthContext';
 
 const features = [
-  'Unlimited journal entries',
-  'Advanced AI insights for deeper self-understanding',
-  'Voice journaling for natural expression',
-  'AI coaching conversations for personal growth'
+  'Smart journaling with rich text formatting and mood tracking',
+  'AI coach chat with personalized guidance and memory integration',
+  'Automatic memory extraction and organization from your entries',
+  'Semantic search to find relevant memories and insights',
+  'Voice-to-text transcription for natural expression',
+  'Complete data privacy and ownership'
 ];
 
 export function PricingSection() {
@@ -58,7 +60,7 @@ export function PricingSection() {
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Start your journey of self-discovery today with our powerful AI-driven journaling platform
+            Transform your self-reflection journey with our AI-powered journaling and coaching platform
           </p>
         </div>
 
@@ -78,7 +80,7 @@ export function PricingSection() {
                 Monthly Plan
               </h3>
               <p className="text-center text-gray-600 mb-8">
-                Everything you need for personal growth
+                All the tools you need for self-discovery and personal growth
               </p>
 
               {/* Price */}
@@ -182,7 +184,7 @@ export function PricingSection() {
 
               {/* Footer Text */}
               <p className="text-center text-gray-500 text-sm mt-6">
-                Start improving your life today with AI-powered journaling
+                Gain deeper insights into your thoughts and patterns with AI-enhanced journaling
               </p>
             </div>
           </div>
