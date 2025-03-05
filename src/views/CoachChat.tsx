@@ -255,7 +255,7 @@ export function CoachChat() {
   useEffect(() => {
     fetchChatSessions();
     fetchUserProfile();
-  }, []);
+  }, [user]);
 
   // Fetch messages when active chat changes
   useEffect(() => {
@@ -431,6 +431,19 @@ export function CoachChat() {
     
     try {
       const profile = await getProfile();
+      console.log('Fetched user profile:', profile); // Debug log
+      
+      if (profile) {
+        // Log profile details for debugging
+        console.log('Profile details:');
+        console.log('- Name:', profile.firstName, profile.lastName);
+        console.log('- Birthdate:', profile.birthdate);
+        console.log('- Country:', profile.country);
+        console.log('- Gender:', profile.gender);
+      } else {
+        console.warn('No profile data returned from getProfile()');
+      }
+      
       setUserProfile(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -442,6 +455,12 @@ export function CoachChat() {
     
     try {
       setIsLoading(true);
+      
+      // Refetch profile data before sending message to ensure it's up to date
+      await fetchUserProfile();
+      
+      // Debug log for profile data
+      console.log('Current user profile when sending message:', userProfile);
       
       // Create a new chat if there's no active chat
       let chatId = activeChatId;
@@ -573,6 +592,8 @@ export function CoachChat() {
         }
       }
       
+      console.log('Profile info being sent to AI:', userProfileInfo); // Debug log
+      
       // Prepare conversation history with enhanced personalization
       const userNameInstruction = firstName 
         ? `The user's name is ${firstName}. Always refer to them by their first name (${firstName}) rather than using generic terms like "you" or "the user". Make the conversation feel personal by using their name naturally throughout your responses.`
@@ -585,7 +606,12 @@ export function CoachChat() {
 
 ${userNameInstruction}
 
-${userProfileInfo ? userProfileInfo + '\n\nUse the above profile information to personalize your responses and make them more relevant to the user\'s background, age, gender, and nationality. Reference these details naturally when appropriate.\n' : ''}
+${userProfileInfo ? `
+IMPORTANT - USER PROFILE INFORMATION:
+${userProfileInfo}
+
+You MUST use the above profile information to personalize your responses. Directly reference the user's age, nationality, and other details in your responses. Do not say you don't have this information.
+` : ''}
 
 Use the user's journal entries and memories as context to provide personalized guidance. Be empathetic, insightful, and supportive. Ask thoughtful questions that promote self-reflection. Provide evidence-based strategies when appropriate.
 
