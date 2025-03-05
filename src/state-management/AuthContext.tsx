@@ -9,19 +9,33 @@ const AUTH_COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-const getRedirectUrl = (plan?: 'monthly' | 'yearly') => {
+const getRedirectUrl = (plan?: 'monthly' | 'yearly', isNewUser: boolean = true) => {
   const isDevelopment = import.meta.env.DEV;
   const baseUrl = isDevelopment 
     ? window.location.origin 
     : 'https://innermaps.co';
-  return `${baseUrl}/auth/callback${plan ? `?plan=${plan}` : ''}`;
+  
+  let url = `${baseUrl}/auth/callback`;
+  
+  // Add query parameters if needed
+  const params = new URLSearchParams();
+  if (plan) params.set('plan', plan);
+  if (isNewUser) params.set('new_user', 'true');
+  
+  // Append parameters if any exist
+  const queryString = params.toString();
+  if (queryString) {
+    url += `?${queryString}`;
+  }
+  
+  return url;
 };
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<void>;
-  signUpWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<void>;
+  signUpWithEmail: (email: string, password: string, plan?: 'monthly' | 'yearly') => Promise<{ success: boolean; redirectTo?: string; message?: string; }>;
   signOut: () => Promise<void>;
   error: string | null;
   isConnected: boolean;
@@ -179,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpWithEmail = async (email: string, password: string, plan?: 'monthly' | 'yearly') => {
     try {
       setError(null);
+      console.log('Starting signup process');
 
       // Input validation and sanitization
       const sanitizedEmail = sanitizeInput(email);
@@ -193,18 +208,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (plan) setSelectedPlan(plan);
       
-      const { error } = await supabase.auth.signUp({
+      console.log('Calling supabase.auth.signUp');
+      const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
-          emailRedirectTo: getRedirectUrl(plan),
+          emailRedirectTo: getRedirectUrl(plan, true),
           data: {
             full_name: sanitizedEmail.split('@')[0]
           }
         }
       });
+      
       if (error) throw error;
+      
+      console.log('Signup successful, session:', data.session ? 'exists' : 'does not exist');
+      
+      // If registration is successful and we have a session, redirect to payment page
+      if (data.session) {
+        // Set the user so the app knows we're logged in
+        setUser(data.session.user);
+        setSessionStart(Date.now());
+        setLastActivityTime(Date.now());
+        
+        console.log('Setting user and session data before redirect');
+        // Don't use window.location.href as it causes a full page reload
+        // The redirect will happen through React Router in the component that called this function
+        return { success: true, redirectTo: '/subscription' };
+      }
+      
+      return { success: true, message: 'Please check your email to confirm your account' };
     } catch (err) {
+      console.error('Signup error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create account');
       throw err;
     }

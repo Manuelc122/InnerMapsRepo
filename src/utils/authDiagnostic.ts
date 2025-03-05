@@ -16,7 +16,7 @@ export const checkAuthState = async () => {
   console.log('\nLocal Storage:');
   const sbKey = `sb-${import.meta.env.VITE_SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
   const hasAuthData = localStorage.getItem(sbKey) !== null;
-  console.log(`- Auth Token (${sbKey}):`, hasAuthData ? '✅ Present' : '❌ Missing');
+  // Removed console.log with sensitive information
   
   // Check current session
   try {
@@ -30,9 +30,9 @@ export const checkAuthState = async () => {
       // Check if token is expired
       const now = Math.floor(Date.now() / 1000);
       if (session.expires_at && session.expires_at < now) {
-        console.log('- Token Status: ❌ EXPIRED');
+        // Removed console.log with sensitive information
       } else {
-        console.log('- Token Status: ✅ Valid');
+        // Removed console.log with sensitive information
       }
     }
   } catch (error) {

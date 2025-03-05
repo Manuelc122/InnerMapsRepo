@@ -11,7 +11,7 @@
 export async function generateMemorySummary(content: string, userName?: string): Promise<string | null> {
   try {
     console.log('Generating summary for content:', content.substring(0, 50) + '...');
-    console.log('Using OpenAI API key:', import.meta.env.VITE_OPENAI_API_KEY ? 'Key is present' : 'Key is missing');
+    // Removed console.log with sensitive information
     
     // Create a personalized system prompt if userName is provided
     let systemPrompt = 'You are a helpful assistant that creates concise, meaningful summaries of journal entries and chat messages. Create a summary that captures the key emotions, events, and insights in 1-2 sentences.';

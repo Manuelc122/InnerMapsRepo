@@ -12,7 +12,7 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 console.log('Environment variables:');
 console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Not set');
 console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Not set');
-console.log('VITE_OPENAI_API_KEY:', process.env.VITE_OPENAI_API_KEY ? 'Set' : 'Not set');
+// Removed console.log with sensitive information
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Error: Supabase URL or key is not set in the .env file');

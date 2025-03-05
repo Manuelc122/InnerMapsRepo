@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, CreditCard } from 'lucide-react';
 import { useAuth } from '../../state-management/AuthContext';
 import { Link } from 'react-router-dom';
 import type { UserProfile } from '../../interfaces/profile';
@@ -53,6 +53,15 @@ export function ProfileDropdown({ onClose, profile }: ProfileDropdownProps) {
         >
           <User className="w-4 h-4" />
           <span>Edit Profile</span>
+        </Link>
+        
+        <Link
+          to="/account/subscription"
+          onClick={onClose}
+          className="flex items-center gap-3 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Manage Subscription</span>
         </Link>
       </div>
 

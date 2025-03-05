@@ -16,7 +16,7 @@ const openaiApiKey = process.env.VITE_OPENAI_API_KEY;
 console.log('Checking environment variables:');
 console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Not set');
 console.log('VITE_SUPABASE_SERVICE_KEY:', supabaseServiceKey ? 'Set' : 'Not set');
-console.log('VITE_OPENAI_API_KEY:', openaiApiKey ? 'Set' : 'Not set');
+// Removed console.log with sensitive information
 
 if (!supabaseUrl || !supabaseServiceKey || !openaiApiKey) {
   console.error('Error: Required environment variables are not set');

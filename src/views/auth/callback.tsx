@@ -16,22 +16,35 @@ export default function AuthCallback() {
         // Get URL parameters
         const params = new URLSearchParams(window.location.search);
         const plan = params.get('plan');
+        const isNewUser = params.get('new_user') === 'true';
         const basePath = getBasePath();
+
+        console.log('Auth callback params:', { plan, isNewUser });
 
         // Check for session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
         if (session) {
+          console.log('Session found, user ID:', session.user.id);
+          
+          // If this is a new user, redirect to direct payment page
+          if (isNewUser) {
+            console.log('New user detected, redirecting to payment page');
+            window.location.href = `${basePath}/payment/direct`;
+          }
           // If we have a plan, redirect to checkout
-          if (plan) {
+          else if (plan) {
+            console.log('Plan detected, redirecting to checkout:', plan);
             window.location.href = `${basePath}/checkout/${plan}`;
           } else {
             // Otherwise go to journal
+            console.log('Existing user, redirecting to journal');
             window.location.href = `${basePath}/journal`;
           }
         } else {
           // No session found, redirect to login
+          console.log('No session found, redirecting to login');
           window.location.href = basePath || '/';
         }
       } catch (error) {
@@ -47,7 +60,7 @@ export default function AuthCallback() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Setting up your account...</p>
+        <p className="text-gray-600">Redirecting you...</p>
       </div>
     </div>
   );

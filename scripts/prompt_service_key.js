@@ -48,7 +48,7 @@ async function promptServiceKey() {
     
     console.log('\nThe Supabase service key is not set in your .env file.');
     console.log('You can find this key in the Supabase dashboard under:');
-    console.log('Project Settings > API > service_role secret\n');
+    // Removed console.log with sensitive information
     
     // Prompt the user for the service key
     rl.question('Please enter your Supabase service key: ', (serviceKey) => {

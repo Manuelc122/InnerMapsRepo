@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state-management/AuthContext';
 import type { SubscriptionPlan } from '../../utils/plans';
+import { WompiButton } from '../payment/WompiButton';
+import { wompiService } from '../../utils/wompi';
+import { useState } from 'react';
 
 interface PricingCardProps {
   name: string;
@@ -27,6 +30,42 @@ export function PricingCard({
 }: PricingCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Convert price from string (e.g., "$10") to cents (e.g., 1000)
+  const getPriceInCents = (): number => {
+    // Remove "$" and convert to number
+    const numericPrice = parseFloat(price.replace('$', ''));
+    // Convert to cents (multiply by 100)
+    return Math.round(numericPrice * 100);
+  };
+
+  const handleSubscribe = () => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/auth/login?redirect=' + encodeURIComponent('/pricing'));
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Generate a unique reference for this transaction
+      const reference = wompiService.generateReference(user.id, plan);
+      
+      // Get the redirect URL
+      const redirectUrl = wompiService.getRedirectUrl();
+      
+      // Reset processing state after a delay (in case the Wompi redirect doesn't happen)
+      setTimeout(() => setIsProcessing(false), 5000);
+      
+      // The WompiButton component will handle the actual payment process
+    } catch (error) {
+      console.error('Error preparing payment:', error);
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="relative flex flex-col rounded-2xl border border-gray-200 p-8 shadow-sm">
       {badge && (
@@ -56,19 +95,34 @@ export function PricingCard({
           </li>
         ))}
       </ul>
-      <button
-        className={`
-          w-full rounded-lg px-4 py-2.5 text-sm font-semibold leading-6 text-center cursor-not-allowed opacity-50
-          ${
-            buttonVariant === 'solid'
-              ? 'bg-blue-600 text-white'
-              : 'text-blue-600 ring-1 ring-inset ring-blue-200'
-          }
-        `}
-        disabled
-      >
-        Coming Soon
-      </button>
+      
+      {user ? (
+        <WompiButton
+          amount={getPriceInCents()}
+          reference={wompiService.generateReference(user.id, plan)}
+          redirectUrl={wompiService.getRedirectUrl()}
+          buttonText={isProcessing ? 'Processing...' : buttonText}
+          className={`
+            w-full rounded-lg
+            ${buttonVariant === 'solid' ? 'bg-blue-600' : 'bg-white border border-blue-200'}
+            ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}
+          `}
+        />
+      ) : (
+        <button
+          onClick={() => navigate('/auth/login?redirect=' + encodeURIComponent('/pricing'))}
+          className={`
+            w-full rounded-lg px-4 py-2.5 text-sm font-semibold leading-6 text-center
+            ${
+              buttonVariant === 'solid'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'text-blue-600 ring-1 ring-inset ring-blue-200 hover:bg-blue-50'
+            }
+          `}
+        >
+          Sign in to Subscribe
+        </button>
+      )}
     </div>
   );
 } 
