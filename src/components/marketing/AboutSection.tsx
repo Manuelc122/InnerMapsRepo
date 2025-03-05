@@ -33,8 +33,8 @@ export function AboutSection() {
           <h2 className="text-4xl font-bold mb-4 gradient-text">
             Our Mission
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            We're dedicated to helping you discover deeper self-understanding through mindful journaling
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            We're building an AI-powered journaling platform that transforms your reflections into meaningful insights. Through smart journaling and personalized AI coaching, we help you discover patterns in your thoughts and experiences that lead to deeper self-understanding and personal growth.
           </p>
         </div>
 
