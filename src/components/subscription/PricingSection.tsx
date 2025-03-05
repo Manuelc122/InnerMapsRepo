@@ -55,8 +55,8 @@ export function PricingSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-6 gradient-text px-12 mx-auto">
-            Subscription
+          <h1 className="text-5xl font-bold mb-6 gradient-text px-16 mx-auto whitespace-nowrap">
+            Subscription Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Unlock your personal growth journey with our AI-powered journaling platform
