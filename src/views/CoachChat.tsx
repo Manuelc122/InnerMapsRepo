@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, Trash2, MessageSquare } from 'lucide-react';
+import { Send, Loader2, Trash2, MessageSquare, RefreshCw } from 'lucide-react';
 import { useAuth } from '../state-management/AuthContext';
 import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -238,7 +238,7 @@ interface ChatSession {
 
 export function CoachChat() {
   const { user, loading } = useAuth();
-  const { firstName } = useUserName();
+  const { firstName, lastName, country, birthdate, gender, refreshUserName } = useUserName();
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -256,6 +256,24 @@ export function CoachChat() {
     fetchChatSessions();
     fetchUserProfile();
   }, [user]);
+
+  // Add effect to refresh profile when window gets focus
+  useEffect(() => {
+    // Function to refresh profile when window gets focus
+    const handleFocus = () => {
+      console.log('Window focused, refreshing profile data');
+      fetchUserProfile();
+      refreshUserName(); // Also refresh the UserNameContext
+    };
+
+    // Add event listener for when the window gets focus
+    window.addEventListener('focus', handleFocus);
+    
+    // Clean up the event listener when component unmounts
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   // Fetch messages when active chat changes
   useEffect(() => {
@@ -430,38 +448,53 @@ export function CoachChat() {
     if (!user) return;
     
     try {
-      // First try to get the profile using the utility function
-      const profile = await getProfile();
-      console.log('Fetched user profile:', profile); // Debug log
+      // Clear the current profile first to ensure we're not using stale data
+      setUserProfile(null);
       
-      if (profile) {
+      // Add a timestamp to force a fresh database query
+      const timestamp = new Date().getTime();
+      console.log(`Fetching fresh profile data at ${timestamp}`);
+      
+      // Direct database query to ensure we get all fields
+      console.log('Performing direct database query for profile data...');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error in direct profile query:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('Direct query profile data:', data);
+        // Convert the direct query data to UserProfile format
+        const profile = {
+          id: data.id,
+          userId: data.user_id,
+          fullName: data.full_name,
+          firstName: data.first_name || data.full_name?.split(' ')[0] || null,
+          lastName: data.last_name || (data.full_name?.split(' ').slice(1).join(' ') || null),
+          birthdate: data.birthdate ? new Date(data.birthdate) : null,
+          country: data.country,
+          gender: data.gender,
+          createdAt: new Date(data.created_at),
+          updatedAt: new Date(data.updated_at)
+        };
+        
         // Log profile details for debugging
         console.log('Profile details:');
         console.log('- Name:', profile.firstName, profile.lastName);
         console.log('- Birthdate:', profile.birthdate);
         console.log('- Country:', profile.country);
         console.log('- Gender:', profile.gender);
+        
+        setUserProfile(profile);
       } else {
-        console.warn('No profile data returned from getProfile()');
-        
-        // If no profile was returned, try a direct database query
-        console.log('Attempting direct database query for profile data...');
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error in direct profile query:', error);
-        } else if (data) {
-          console.log('Direct query profile data:', data);
-        } else {
-          console.warn('No profile found in direct database query');
-        }
+        console.warn('No profile found in direct database query');
       }
-      
-      setUserProfile(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -583,50 +616,107 @@ export function CoachChat() {
       
       // Check if we have profile data from the database
       if (userProfile) {
+        console.log('Using profile data from database:', userProfile); // Additional debug log
         const profileDetails = [];
         
-        if (userProfile.firstName) profileDetails.push(`First Name: ${userProfile.firstName}`);
-        if (userProfile.lastName) profileDetails.push(`Last Name: ${userProfile.lastName}`);
+        // Use firstName from either source
+        const userFirstName = userProfile.firstName || firstName;
+        if (userFirstName) profileDetails.push(`First Name: ${userFirstName}`);
         
-        if (userProfile.birthdate) {
-          const birthdate = new Date(userProfile.birthdate);
-          const age = new Date().getFullYear() - birthdate.getFullYear();
+        // Use lastName from either source
+        const userLastName = userProfile.lastName || lastName;
+        if (userLastName) profileDetails.push(`Last Name: ${userLastName}`);
+        
+        // Use birthdate from either source
+        const userBirthdate = userProfile.birthdate || birthdate;
+        if (userBirthdate) {
+          const birthdate = new Date(userBirthdate);
+          const today = new Date();
+          
+          // Calculate age considering month and day
+          let age = today.getFullYear() - birthdate.getFullYear();
+          const monthDiff = today.getMonth() - birthdate.getMonth();
+          
+          // If birthday hasn't occurred yet this year, subtract one year
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+            age--;
+          }
+          
           profileDetails.push(`Age: ${age} years old`);
           profileDetails.push(`Birth Date: ${birthdate.toLocaleDateString()}`);
+          console.log(`Calculated age: ${age} from birthdate: ${birthdate.toISOString()}`); // Debug log for age calculation
+          console.log(`Today's date used for calculation: ${today.toISOString()}`); // Log today's date for verification
+        } else {
+          console.log('No birthdate available in profile'); // Debug log for missing birthdate
         }
         
-        if (userProfile.country) {
+        // Use country from either source
+        const userCountry = userProfile.country || country;
+        if (userCountry) {
           // Find the country name from the code
-          const countryObj = countries.find(c => c.code === userProfile.country);
-          const countryName = countryObj ? `${countryObj.flag} ${countryObj.name}` : userProfile.country;
+          const countryObj = countries.find(c => c.code === userCountry);
+          const countryName = countryObj ? `${countryObj.flag} ${countryObj.name}` : userCountry;
           profileDetails.push(`Nationality/Country: ${countryName}`);
+          console.log(`Country info: code=${userCountry}, resolved to: ${countryName}`); // Debug log for country
+        } else {
+          console.log('No country information available in profile'); // Debug log for missing country
         }
         
-        if (userProfile.gender) {
-          profileDetails.push(`Gender: ${userProfile.gender}`);
+        // Use gender from either source
+        const userGender = userProfile.gender || gender;
+        if (userGender) {
+          profileDetails.push(`Gender: ${userGender}`);
+          console.log(`Gender info: ${userGender}`); // Debug log for gender
+        } else {
+          console.log('No gender information available in profile'); // Debug log for missing gender
         }
         
         if (profileDetails.length > 0) {
           userProfileInfo = `User Profile Information:\n${profileDetails.join('\n')}`;
         }
       } else {
-        // If we don't have profile data from the database, use hardcoded profile information
-        // This is a fallback to ensure the AI has some profile information to work with
-        console.log('No profile data available, using hardcoded profile information');
+        // If we don't have profile data from the database, use only the information we have
+        // from the UserNameContext
+        console.log('No profile data available from database, using UserNameContext data');
         
-        // Replace these values with the actual user's information
-        const hardcodedProfile = {
-          firstName: firstName || 'Manuel',
-          country: 'Palestine', // Replace with actual country
-          age: 30, // Replace with actual age
-          gender: 'male' // Replace with actual gender
-        };
+        const profileDetails = [];
         
-        userProfileInfo = `User Profile Information:
-First Name: ${hardcodedProfile.firstName}
-Nationality/Country: ${hardcodedProfile.country}
-Age: ${hardcodedProfile.age} years old
-Gender: ${hardcodedProfile.gender}`;
+        if (firstName) profileDetails.push(`First Name: ${firstName}`);
+        if (lastName) profileDetails.push(`Last Name: ${lastName}`);
+        
+        if (birthdate) {
+          const today = new Date();
+          
+          // Calculate age considering month and day
+          let age = today.getFullYear() - birthdate.getFullYear();
+          const monthDiff = today.getMonth() - birthdate.getMonth();
+          
+          // If birthday hasn't occurred yet this year, subtract one year
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+            age--;
+          }
+          
+          profileDetails.push(`Age: ${age} years old`);
+          profileDetails.push(`Birth Date: ${birthdate.toLocaleDateString()}`);
+          console.log(`Calculated age: ${age} from birthdate: ${birthdate.toISOString()}`); // Debug log
+          console.log(`Today's date used for calculation: ${today.toISOString()}`); // Log today's date
+        }
+        
+        if (country) {
+          const countryObj = countries.find(c => c.code === country);
+          const countryName = countryObj ? `${countryObj.flag} ${countryObj.name}` : country;
+          profileDetails.push(`Nationality/Country: ${countryName}`);
+        }
+        
+        if (gender) {
+          profileDetails.push(`Gender: ${gender}`);
+        }
+        
+        if (profileDetails.length > 0) {
+          userProfileInfo = `User Profile Information:\n${profileDetails.join('\n')}`;
+        } else {
+          userProfileInfo = `User Profile Information:\nNo detailed profile information available`;
+        }
       }
       
       console.log('Profile info being sent to AI:', userProfileInfo); // Debug log
@@ -646,7 +736,7 @@ ${userNameInstruction}
 IMPORTANT - USER PROFILE INFORMATION:
 ${userProfileInfo}
 
-You MUST use the above profile information to personalize your responses. Directly reference the user's age, nationality, and other details in your responses. Do not say you don't have this information.
+You MUST use the above profile information to personalize your responses. Directly reference the user's age, nationality, gender, and other details in your responses when appropriate. Do not say you don't have this information. If certain profile information is not provided, do not make assumptions about it.
 
 Use the user's journal entries and memories as context to provide personalized guidance. Be empathetic, insightful, and supportive. Ask thoughtful questions that promote self-reflection. Provide evidence-based strategies when appropriate.
 
@@ -658,8 +748,12 @@ Remember to:
 - Suggest practical strategies for personal growth
 - Respect the user's autonomy and avoid being prescriptive
 ${firstName ? `- Address the user as "${firstName}" at least once in each response` : ''}
-${userProfile?.country ? `- When appropriate, incorporate cultural context relevant to ${userProfile.country}` : ''}
+${userProfile?.country ? 
+  `- When appropriate, incorporate cultural context relevant to ${
+    countries.find(c => c.code === userProfile.country)?.name || userProfile.country
+  }` : ''}
 ${userProfile?.birthdate ? `- Consider the user's age (${new Date().getFullYear() - new Date(userProfile.birthdate).getFullYear()}) when providing advice` : ''}
+${userProfile?.gender ? `- Be mindful of the user's gender (${userProfile.gender}) in your responses` : ''}
 
 Memory Context:
 ${memoryContext}`
@@ -819,13 +913,29 @@ ${memoryContext}`
     }
   }, [user, loading, firstName]);
 
+  const handleRefreshProfile = async () => {
+    console.log('Manually refreshing profile data');
+    await fetchUserProfile();
+    await refreshUserName(); // Also refresh the UserNameContext
+    alert('Profile data refreshed');
+  };
+
   return (
     <div className="h-[calc(100vh-64px)] flex">
       {/* Left Sidebar - Chat Sessions */}
       <div className="w-72 border-r border-gray-200 bg-white/80 backdrop-blur-sm flex flex-col">
-        <div className="bg-white/80 backdrop-blur-sm py-2 px-4 border-b border-gray-200">
-          <h1 className="text-lg font-bold gradient-text">Coach Chat</h1>
-          <p className="text-xs text-gray-500">Your personal AI coach</p>
+        <div className="bg-white/80 backdrop-blur-sm py-2 px-4 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h1 className="text-lg font-bold gradient-text">Coach Chat</h1>
+            <p className="text-xs text-gray-500">Your personal AI coach</p>
+          </div>
+          <button
+            onClick={handleRefreshProfile}
+            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-full"
+            title="Refresh Profile Data"
+          >
+            <RefreshCw size={16} />
+          </button>
         </div>
 
         <div className="p-3 flex-1 overflow-hidden flex flex-col">
@@ -910,7 +1020,7 @@ ${memoryContext}`
                   <button
                     key={i}
                     onClick={() => setMessage(suggestion)}
-                    className="text-left p-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm text-gray-700"
+                    className="p-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     {suggestion}
                   </button>
