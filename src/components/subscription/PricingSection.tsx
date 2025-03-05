@@ -17,7 +17,7 @@ export function PricingSection() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSignIn, setIsSignIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signUpWithEmail, signInWithEmail } = useAuth();
+  const { signUpWithEmail, signInWithEmail, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +43,17 @@ export function PricingSection() {
   const toggleAuthMode = () => {
     setIsSignIn(!isSignIn);
     setError(null);
+  };
+
+  const handleSubscribeClick = () => {
+    if (user) {
+      // If user is already logged in, redirect directly to subscription page
+      navigate('/payment/subscription');
+    } else {
+      // Otherwise, show the auth modal
+      setIsAuthModalOpen(true);
+      setIsSignIn(false);
+    }
   };
 
   return (
@@ -105,13 +116,10 @@ export function PricingSection() {
               {!isAuthModalOpen ? (
                 <div className="space-y-4">
                   <button
-                    onClick={() => {
-                      setIsAuthModalOpen(true);
-                      setIsSignIn(false);
-                    }}
+                    onClick={handleSubscribeClick}
                     className="group block w-full py-4 px-8 text-center text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200"
                   >
-                    Get Started Now
+                    Subscribe with PayU
                     <ArrowRight className="ml-2 w-5 h-5 inline-block group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
@@ -131,7 +139,7 @@ export function PricingSection() {
                       {isSignIn ? 'Welcome Back!' : 'Create Your Account'}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {isSignIn ? 'Sign in to continue your journey' : 'Start your journey today'}
+                      {isSignIn ? 'Sign in to continue your journey' : 'Sign up to continue to subscription'}
                     </p>
                   </div>
 
@@ -167,7 +175,7 @@ export function PricingSection() {
                     type="submit"
                     className="w-full py-4 px-8 text-white bg-gradient-to-r from-[#4461F2] to-[#7E87FF] rounded-xl hover:opacity-90 transition-all duration-200"
                   >
-                    {isSignIn ? 'Sign In' : 'Start Journaling'}
+                    {isSignIn ? 'Sign In' : 'Continue to Subscribe'}
                     <ArrowRight className="ml-2 w-5 h-5 inline-block" />
                   </button>
                   
