@@ -274,13 +274,8 @@ export function ProfileForm({ initialData, onSubmit, isLoading = false }: Profil
       return;
     }
     
-    // Convert birthdate string to Date object
-    const submissionData = {
-      ...formData,
-      birthdate: new Date(formData.birthdate)
-    };
-    
-    onSubmit(submissionData);
+    // Submit the form data directly since birthdate is already a string
+    onSubmit(formData);
   };
 
   // Find selected country
@@ -364,39 +359,58 @@ export function ProfileForm({ initialData, onSubmit, isLoading = false }: Profil
             Country
           </label>
           <div className="relative">
-            <input
-              type="text"
-              id="countrySearch"
-              name="countrySearch"
-              value={countrySearch}
-              onChange={handleCountrySearch}
-              placeholder="Search for a country"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <div 
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10 flex justify-between items-center cursor-pointer"
+              onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+            >
+              <div className="flex items-center">
+                <Globe className="h-5 w-5 text-gray-400 absolute left-3" />
+                {selectedCountry ? (
+                  <span className="ml-2">{selectedCountry.flag} {selectedCountry.name}</span>
+                ) : (
+                  <span className="ml-2 text-gray-500">Select your country</span>
+                )}
+              </div>
               <ChevronDown className="h-5 w-5 text-gray-400" />
             </div>
-          </div>
-          <div className="mt-2">
-            <select
+            
+            {isCountryDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="sticky top-0 bg-white p-2 border-b border-gray-200">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={countrySearch}
+                      onChange={handleCountrySearch}
+                      placeholder="Search countries..."
+                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pl-8"
+                    />
+                    <Search className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
+                  </div>
+                </div>
+                <div className="py-1">
+                  {filteredCountries.map((country) => (
+                    <div
+                      key={country.code}
+                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center ${
+                        formData.country === country.code ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                      onClick={() => handleCountrySelect(country.code, country.name)}
+                    >
+                      <span className="mr-2">{country.flag}</span>
+                      <span>{country.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <input
+              type="hidden"
               id="country"
               name="country"
               value={formData.country}
-              onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10 appearance-none"
               required
-              multiple
-              size={10}
-            >
-              {filteredCountries.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
