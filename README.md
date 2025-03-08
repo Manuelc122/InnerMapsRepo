@@ -323,3 +323,57 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created
 ---
 
 Built with ❤️ for better mental health
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables:
+   - Run `node --experimental-modules scripts/setup-stripe-keys.js` to set up Stripe API keys
+4. Start the development server: `npm run dev`
+
+## Features
+
+- Smart journaling with rich text formatting
+- AI coach chat with personalized guidance
+- Automatic memory extraction and organization
+- Semantic search to find relevant memories and insights
+- Voice-to-text transcription for natural expression
+
+## Subscription Plans
+
+InnerMaps offers two subscription plans:
+- **Monthly Plan**: $12/month
+- **Yearly Plan**: $120/year (17% savings)
+
+## Admin Dashboard
+
+### How to Access the Admin Dashboard
+
+1. **Login with an Admin Account**:
+   - Use the email `admin@innermaps.co` to log in
+   - This account has special admin privileges
+
+2. **Navigate to the Admin Dashboard**:
+   - After logging in, you'll see an "Admin" link in the top navigation bar
+   - Click on this link to access the admin dashboard
+
+3. **Admin Features**:
+   - **Exempt Users Management**: Add or remove users from the payment exemption list
+   - Grant free subscriptions to specific users
+   - View all currently exempt users
+
+### Managing Exempt Users
+
+1. From the admin dashboard, click on "Exempt Users Management"
+2. To add a new exempt user:
+   - Enter their email address
+   - Select the plan type (monthly or yearly)
+   - Click "Add User"
+3. To remove an exempt user, click the "Remove" button next to their email
+
+## Development
+
+- Built with React, TypeScript, and Vite
+- Uses Tailwind CSS for styling
+- Integrates with Stripe for payment processing

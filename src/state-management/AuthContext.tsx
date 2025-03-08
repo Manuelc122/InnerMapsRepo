@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, checkSupabaseConnection, recoverSession } from '../utils/supabaseClient';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../utils/supabase';
+import { checkSupabaseConnection, recoverSession } from '../utils/supabaseClient';
 import type { User, AuthResponse, SignInWithPasswordCredentials } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, sanitizeInput } from '../utils/validation';
+import { STRIPE_PRICE_IDS, redirectToPaymentLink } from '../utils/stripeClient';
 
 // Security constants
 const MAX_AUTH_RETRIES = 3;
@@ -21,6 +23,7 @@ const getRedirectUrl = (plan?: 'monthly' | 'yearly', isNewUser: boolean = true) 
   const params = new URLSearchParams();
   if (plan) params.set('plan', plan);
   if (isNewUser) params.set('new_user', 'true');
+  params.set('from_registration', 'true'); // Always add this for tracking
   
   // Append parameters if any exist
   const queryString = params.toString();
@@ -28,6 +31,7 @@ const getRedirectUrl = (plan?: 'monthly' | 'yearly', isNewUser: boolean = true) 
     url += `?${queryString}`;
   }
   
+  console.log('Generated redirect URL:', url);
   return url;
 };
 
@@ -114,6 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Try to recover the session
         const session = await recoverSession();
+        
+        // If session is null, it means there's no active session (not an error)
         setUser(session?.user ?? null);
         setIsConnected(true);
         
@@ -123,7 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to initialize authentication');
+        // Don't set error for missing session - that's a normal state
+        if (err instanceof Error && !err.message.includes('Auth session missing')) {
+          setError(err.message);
+        }
         setUser(null);
         setIsConnected(false);
       } finally {
@@ -182,6 +191,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthAttempts(0);
       setLastAttemptTime(0);
       setIsConnected(true);
+      
+      // If a plan is specified, redirect to the payment link
+      if (plan && data.session) {
+        console.log('Redirecting to payment link for plan:', plan);
+        redirectToPaymentLink(plan, data.session.user.id, sanitizedEmail);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
       console.error('Sign in error:', err);
@@ -206,14 +221,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(passwordValidation.errors.join('\n'));
       }
 
-      if (plan) setSelectedPlan(plan);
+      // Default to monthly plan if none specified
+      const selectedPlanType = plan || 'monthly';
+      if (plan) setSelectedPlan(selectedPlanType);
       
       console.log('Calling supabase.auth.signUp');
       const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
-          emailRedirectTo: getRedirectUrl(plan, true),
+          emailRedirectTo: getRedirectUrl(selectedPlanType, true),
           data: {
             full_name: sanitizedEmail.split('@')[0]
           }
@@ -224,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Signup successful, session:', data.session ? 'exists' : 'does not exist');
       
-      // If registration is successful and we have a session, redirect to payment page
+      // If registration is successful and we have a session, redirect to payment link
       if (data.session) {
         // Set the user so the app knows we're logged in
         setUser(data.session.user);
@@ -232,9 +249,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLastActivityTime(Date.now());
         
         console.log('Setting user and session data before redirect');
-        // Don't use window.location.href as it causes a full page reload
-        // The redirect will happen through React Router in the component that called this function
-        return { success: true, redirectTo: '/subscription' };
+        
+        // Redirect to the Stripe payment link
+        console.log('Redirecting to payment link for plan:', selectedPlanType);
+        redirectToPaymentLink(selectedPlanType, data.session.user.id, sanitizedEmail);
+        
+        // Return success for the component that called this function
+        return { success: true, redirectTo: 'payment_link' };
       }
       
       return { success: true, message: 'Please check your email to confirm your account' };

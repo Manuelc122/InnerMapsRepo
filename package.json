@@ -34,6 +34,7 @@
     "@heroicons/react": "^2.2.0",
     "@mercadopago/sdk-react": "^0.0.17",
     "@reduxjs/toolkit": "^2.5.1",
+    "@stripe/stripe-js": "^5.10.0",
     "@supabase/supabase-js": "^2.39.0",
     "@types/crypto-js": "^4.2.2",
     "@types/styled-components": "^5.1.34",

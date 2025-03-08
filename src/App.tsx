@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import './styles/markdown.css';
@@ -21,63 +21,34 @@ import PaymentResultPage from './pages/PaymentResultPage';
 import DirectPaymentPage from './views/payment/DirectPaymentPage';
 import SubscriptionPage from './views/payment/SubscriptionPage';
 import SubscriptionManagementPage from './views/account/SubscriptionManagementPage';
-import { supabase } from './utils/supabase';
+import { supabase } from './utils/supabaseClient';
+import AdminDashboard from './views/admin/AdminDashboard';
+import { ExemptUsersAdmin } from './views/admin/ExemptUsers';
+import PaymentSuccessPage from './views/payment/success';
+import PaymentCancelPage from './views/payment/cancel';
+import { SubscriptionProvider, useSubscription } from './state-management/SubscriptionContext';
+import AdminLogin from './views/admin/AdminLogin';
 
-// Check if user has made a payment
-const useHasPayment = (userId: string | undefined) => {
-  const [hasPayment, setHasPayment] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkPayment = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Check if the user has an active subscription
-        const { data, error } = await supabase
-          .rpc('has_active_subscription', {
-            user_id: userId
-          });
-        
-        if (error) {
-          console.error('Error checking subscription status:', error);
-          setHasPayment(false);
-        } else {
-          setHasPayment(!!data); // Convert to boolean
-        }
-      } catch (error) {
-        console.error('Error checking payment status:', error);
-        setHasPayment(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkPayment();
-  }, [userId]);
-
-  return { hasPayment, loading };
-};
+// Lazy load the checkout components
+const CheckoutPage = lazy(() => import('./views/checkout/[plan]'));
+const SuccessPage = lazy(() => import('./views/checkout/success'));
+const CancelPage = lazy(() => import('./views/checkout/cancel'));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { hasPayment, loading: paymentLoading } = useHasPayment(user?.id);
+  const { hasActiveSubscription, isLoading: subscriptionLoading } = useSubscription();
   const navigate = useNavigate();
 
+  // Restore the redirection to subscription page for users without active subscriptions
   useEffect(() => {
     // If user is logged in but hasn't made a payment, redirect to subscription page
-    // Temporarily commented out for testing
-    /*
-    if (user && hasPayment === false && !paymentLoading) {
+    if (user && hasActiveSubscription === false && !subscriptionLoading) {
+      console.log('User has no active subscription, redirecting to subscription page');
       navigate('/subscription');
     }
-    */
-  }, [user, hasPayment, paymentLoading, navigate]);
+  }, [user, hasActiveSubscription, subscriptionLoading, navigate]);
 
-  if (authLoading || paymentLoading) {
+  if (authLoading || subscriptionLoading) {
     return <LoadingSpinner />;
   }
 
@@ -85,23 +56,20 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     return <Navigate to="/" />;
   }
 
-  // Always render children for testing purposes
-  return <AppLayout>{children}</AppLayout>;
-
-  // Original code:
-  // // If user has made a payment or we're still checking, render the children
-  // if (hasPayment === true || hasPayment === null) {
-  //   return <AppLayout>{children}</AppLayout>;
-  // }
-  //
-  // // If user hasn't made a payment, show loading while redirecting
-  // return <LoadingSpinner />;
+  // Only render children if user has an active subscription
+  if (hasActiveSubscription) {
+    return <AppLayout>{children}</AppLayout>;
+  }
+  
+  // If user hasn't made a payment, show loading while redirecting
+  return <LoadingSpinner />;
 }
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const { hasActiveSubscription, isLoading: subscriptionLoading } = useSubscription();
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return <LoadingSpinner />;
   }
 
@@ -112,7 +80,16 @@ function AppRoutes() {
         <Route path="/auth-diagnostic" element={<AuthDiagnostic />} />
         <Route path="/diagnostic" element={<AuthDiagnostic />} />
         <Route path="/memory-diagnostic" element={<MemoryDiagnostic />} />
-        <Route path="/" element={user ? <Navigate to="/journal" /> : <LandingPage />} />
+        <Route 
+          path="/" 
+          element={
+            user 
+              ? (hasActiveSubscription 
+                  ? <Navigate to="/journal" /> 
+                  : <Navigate to="/subscription" />)
+              : <LandingPage />
+          } 
+        />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
@@ -149,6 +126,11 @@ function AppRoutes() {
             </RequireAuth>
           }
         />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/admin/login" />} />
+        <Route path="/admin/exempt-users" element={user ? <ExemptUsersAdmin /> : <Navigate to="/admin/login" />} />
+        
         <Route path="/payment/result" element={<PaymentResultPage />} />
         <Route 
           path="/payment/direct" 
@@ -168,6 +150,36 @@ function AppRoutes() {
             user ? <SubscriptionManagementPage /> : <Navigate to="/" />
           } 
         />
+        <Route 
+          path="/checkout/:plan" 
+          element={
+            user ? (
+              <Suspense fallback={<LoadingSpinner />}>
+                <CheckoutPage />
+              </Suspense>
+            ) : <Navigate to="/" />
+          } 
+        />
+        <Route 
+          path="/success" 
+          element={
+            user ? (
+              <Suspense fallback={<LoadingSpinner />}>
+                <SuccessPage />
+              </Suspense>
+            ) : <Navigate to="/" />
+          } 
+        />
+        <Route 
+          path="/cancel" 
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <CancelPage />
+            </Suspense>
+          } 
+        />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/cancel" element={<PaymentCancelPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </UserNameProvider>
@@ -179,7 +191,9 @@ export default function App() {
     <Provider store={store}>
       <Router>
         <Toaster position="top-right" />
-        <AppRoutes />
+        <SubscriptionProvider>
+          <AppRoutes />
+        </SubscriptionProvider>
       </Router>
     </Provider>
   );

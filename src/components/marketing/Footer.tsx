@@ -20,16 +20,16 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Quick Links</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
+                <a href="#features" className="text-gray-600 hover:text-[#6C63FF]">Features</a>
               </li>
               <li>
-                <a href="#demo" className="text-gray-600 hover:text-gray-900">Demo</a>
+                <a href="#demo" className="text-gray-600 hover:text-[#6C63FF]">Demo</a>
               </li>
               <li>
-                <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
+                <a href="#pricing" className="text-gray-600 hover:text-[#6C63FF]">Pricing</a>
               </li>
               <li>
-                <a href="#about" className="text-gray-600 hover:text-gray-900">About</a>
+                <a href="#about" className="text-gray-600 hover:text-[#6C63FF]">About</a>
               </li>
             </ul>
           </div>
@@ -41,7 +41,7 @@ export function Footer() {
               <li>
                 <a 
                   href="mailto:support@innermaps.co" 
-                  className="inline-flex items-center text-gray-600 hover:text-gray-900"
+                  className="inline-flex items-center text-gray-600 hover:text-[#6C63FF]"
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   support@innermaps.co

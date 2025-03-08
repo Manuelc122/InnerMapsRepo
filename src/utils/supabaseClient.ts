@@ -39,7 +39,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'apikey': supabaseAnonKey,
+      'Prefer': 'return=representation'
     }
   },
   db: {
@@ -54,19 +57,40 @@ export const recoverSession = async () => {
     if (error) throw error;
     
     if (!session) {
-      // Try to refresh the session
-      const { data: { session: refreshedSession }, error: refreshError } = 
-        await supabase.auth.refreshSession();
-      
-      if (refreshError) throw refreshError;
-      if (!refreshedSession) throw new Error('No session available');
-      
-      return refreshedSession;
+      try {
+        // Try to refresh the session
+        const { data: { session: refreshedSession }, error: refreshError } = 
+          await supabase.auth.refreshSession();
+        
+        if (refreshError) throw refreshError;
+        if (!refreshedSession) {
+          console.log('No session available, returning null instead of throwing');
+          return null;
+        }
+        
+        return refreshedSession;
+      } catch (refreshError: any) {
+        // If we get an AuthSessionMissingError, just return null instead of throwing
+        if (refreshError?.message && typeof refreshError.message === 'string' && 
+            refreshError.message.includes('Auth session missing')) {
+          console.log('Auth session missing, returning null instead of throwing');
+          return null;
+        }
+        throw refreshError;
+      }
     }
     
     return session;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Session recovery failed:', error);
+    
+    // If we get an AuthSessionMissingError, just return null instead of throwing
+    if (error?.message && typeof error.message === 'string' && 
+        error.message.includes('Auth session missing')) {
+      console.log('Auth session missing, returning null instead of throwing');
+      return null;
+    }
+    
     // Clear any invalid session data
     await supabase.auth.signOut();
     throw error;

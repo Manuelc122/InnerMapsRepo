@@ -2,11 +2,17 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
 import { useAuth } from '../../state-management/AuthContext';
-import { Settings, Book, MessageSquare, Brain, User, LogOut } from 'lucide-react';
+import { Settings, Book, MessageSquare, Brain, User, LogOut, ShieldAlert } from 'lucide-react';
+
+// Admin-only emails that can access the admin dashboard
+const ADMIN_EMAILS = ['admin@innermaps.co'];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+
+  // Check if current user is an admin
+  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -56,6 +62,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`inline-flex items-center px-3 py-1.5 text-sm font-medium ${
+                    location.pathname.startsWith('/admin')
+                      ? 'text-purple-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <ShieldAlert className="w-5 h-5 mr-1" />
+                  Admin
+                </Link>
+              )}
               <Link
                 to="/profile"
                 className={`inline-flex items-center px-3 py-1.5 text-sm font-medium ${

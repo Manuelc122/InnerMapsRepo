@@ -65,7 +65,7 @@ export function FeaturesSection() {
   });
 
   return (
-    <section id="features" className="py-24 bg-gradient-to-b from-white to-blue-50/30">
+    <section id="features" className="py-24 bg-gradient-to-b from-white to-[#6C63FF]/5">
       <motion.div
         ref={ref}
         initial={{ opacity: 0 }}
@@ -76,13 +76,13 @@ export function FeaturesSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
-            className="inline-flex items-center gap-2 px-4 py-1 bg-blue-50 rounded-full text-blue-600 mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1 bg-[#6C63FF]/10 rounded-full text-[#6C63FF] mb-4"
           >
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">Powerful Features</span>
           </motion.div>
           
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 gradient-text">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 text-transparent bg-clip-text bg-gradient-to-r from-[#6C63FF] to-[#8A6AFD]">
             Features That Empower Your Journey
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -102,7 +102,7 @@ export function FeaturesSection() {
               } : {}}
               className="group p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white">
+              <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-[#6C63FF] to-[#8A6AFD] flex items-center justify-center text-white">
                 <feature.icon className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-gray-900">

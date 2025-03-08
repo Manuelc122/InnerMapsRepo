@@ -6,7 +6,7 @@ import {
   Target, Compass, Star,
   FileText, LineChart,
   Mic, Pause, Play,
-  LucideIcon, ChevronRight, ChevronLeft, Search
+  LucideIcon, ChevronRight, ChevronLeft, Search, ArrowRight
 } from 'lucide-react';
 import { JournalAnalytics } from './AppShowcase/JournalAnalytics';
 import { Link } from 'react-router-dom';
@@ -133,14 +133,14 @@ export function DemoSection() {
       preview: (
         <div className="relative h-full w-full bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6C63FF] to-[#8A6AFD] flex items-center justify-center">
               <Mic className="w-6 h-6 text-white" />
             </div>
             <div>
               <h3 className="text-lg font-semibold">Journal Entry</h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-emerald-600">Mood: Reflective</span>
-                <span className="text-sm text-blue-600">Format: Voice</span>
+                <span className="text-sm text-[#6C63FF]">Format: Voice</span>
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ export function DemoSection() {
               {Array.from({ length: 30 }).map((_, index) => (
                 <div
                   key={index}
-                  className="flex-1 h-12 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full opacity-50 animate-pulse"
+                  className="flex-1 h-12 bg-gradient-to-t from-[#6C63FF] to-[#8A6AFD] rounded-full opacity-50 animate-pulse"
                   style={{
                     animationDelay: `${index * 0.1}s`,
                     height: `${Math.sin(index * 0.5) * 24 + 24}px`
@@ -174,7 +174,7 @@ export function DemoSection() {
       preview: (
         <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6C63FF] to-[#8A6AFD] flex items-center justify-center">
               <MessageSquare className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -184,7 +184,7 @@ export function DemoSection() {
           </div>
           <div className="space-y-4">
             <div className="flex justify-end">
-              <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+              <div className="bg-[#6C63FF] text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
                 <p className="text-sm">I've been working 60-hour weeks trying to prove myself, but lately I feel disconnected from everything that matters - my relationships, my health, even my sense of purpose.</p>
               </div>
             </div>
@@ -194,7 +194,7 @@ export function DemoSection() {
               </div>
             </div>
             <div className="flex justify-end">
-              <div className="bg-blue-500 text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+              <div className="bg-[#6C63FF] text-white rounded-2xl rounded-tr-none p-3 max-w-[80%]">
                 <p className="text-sm">I've never really thought about it that way... I guess true success would be feeling like I'm growing as a person, not just in my career.</p>
               </div>
             </div>
@@ -214,7 +214,7 @@ export function DemoSection() {
       preview: (
         <div className="h-full w-full bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6C63FF] to-[#8A6AFD] flex items-center justify-center">
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -229,21 +229,21 @@ export function DemoSection() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Work-life balance concerns</span>
                   <div className="flex gap-2">
-                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-[#6C63FF]/20 text-[#6C63FF] text-xs">Pin</button>
                     <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Career growth reflections</span>
                   <div className="flex gap-2">
-                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-[#6C63FF]/20 text-[#6C63FF] text-xs">Pin</button>
                     <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Family time priorities</span>
                   <div className="flex gap-2">
-                    <button className="p-1 rounded bg-blue-100 text-blue-600 text-xs">Pin</button>
+                    <button className="p-1 rounded bg-[#6C63FF]/20 text-[#6C63FF] text-xs">Pin</button>
                     <button className="p-1 rounded bg-gray-100 text-gray-600 text-xs">Archive</button>
                   </div>
                 </div>
@@ -302,98 +302,95 @@ export function DemoSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1 bg-primary-light/10 rounded-full text-primary mb-4"
-          >
+          <div className="inline-flex items-center gap-2 px-4 py-1 bg-[#6C63FF]/10 rounded-full text-[#6C63FF] mb-4">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">See It In Action</span>
-          </motion.div>
+            <span className="text-sm font-medium">Interactive Demo</span>
+          </div>
           
-          <h2 className="text-4xl font-bold mb-4 gradient-text">
-            Experience Inner Growth
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 text-transparent bg-clip-text bg-gradient-to-r from-[#6C63FF] to-[#8A6AFD]">
+            See InnerMaps in Action
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Watch how our AI-powered journaling platform helps you unlock deeper self-understanding
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Experience how our AI-powered journaling platform works
           </p>
         </div>
 
-        <div className="relative">
-          <div className="aspect-[16/9] max-w-4xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-white rounded-3xl overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full p-8"
-                >
-                  <div className="grid md:grid-cols-2 gap-8 h-full">
-                    <div className="flex flex-col justify-center">
-                      <h3 className="text-2xl font-bold mb-4 gradient-text">
-                        {demoSteps[currentStep].title}
-                      </h3>
-                      <p className="text-gray-600 mb-8">
-                        {demoSteps[currentStep].description}
-                      </p>
-                    </div>
-                    <div className="relative h-full">
-                      {demoSteps[currentStep].preview}
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="absolute left-0 right-0 bottom-4 flex justify-center items-center gap-4">
-            <button
-              onClick={prevStep}
-              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
-            >
-              {isPlaying ? (
-                <Pause className="w-6 h-6 text-gray-600" />
-              ) : (
-                <Play className="w-6 h-6 text-gray-600" />
-              )}
-            </button>
-            <button
-              onClick={nextStep}
-              className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Step indicators */}
-          <div className="absolute -bottom-12 left-0 right-0">
-            <div className="flex justify-center items-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          {/* Demo Steps */}
+          <div>
+            <div className="space-y-8">
               {demoSteps.map((step, index) => (
-                <button
+                <div 
                   key={step.id}
-                  onClick={() => {
-                    setCurrentStep(index);
-                    setIsPlaying(false);
-                  }}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                    currentStep === index
-                      ? 'w-8 bg-blue-500'
-                      : 'bg-gray-300 hover:bg-gray-400'
+                  className={`p-6 rounded-xl cursor-pointer transition-all duration-300 ${
+                    currentStep === index 
+                      ? 'bg-white shadow-lg border-l-4 border-[#6C63FF]' 
+                      : 'bg-white/50 hover:bg-white hover:shadow-md'
                   }`}
-                />
+                  onClick={() => setCurrentStep(index)}
+                >
+                  <h3 className={`text-xl font-semibold mb-2 ${
+                    currentStep === index ? 'text-[#6C63FF]' : 'text-gray-900'
+                  }`}>
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600">
+                    {step.description}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
+
+          {/* Demo Preview */}
+          <div className="bg-gradient-to-br from-[#6C63FF]/10 to-[#8A6AFD]/10 p-8 rounded-3xl">
+            <div className="relative aspect-[4/3] bg-white rounded-2xl shadow-xl overflow-hidden">
+              {demoSteps.map((step, index) => (
+                <div 
+                  key={step.id}
+                  className={`absolute inset-0 transition-opacity duration-500 ${
+                    currentStep === index ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                >
+                  {step.preview}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Controls */}
+        <div className="flex justify-center mt-12 gap-4">
+          <button 
+            onClick={prevStep}
+            className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow"
+            aria-label="Previous demo"
+          >
+            <ChevronLeft className="w-6 h-6 text-[#6C63FF]" />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            {demoSteps.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentStep(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  currentStep === index 
+                    ? 'bg-[#6C63FF] scale-125' 
+                    : 'bg-gray-300 hover:bg-gray-400'
+                }`}
+                aria-label={`Go to demo step ${index + 1}`}
+              />
+            ))}
+          </div>
+          
+          <button 
+            onClick={nextStep}
+            className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow"
+            aria-label="Next demo"
+          >
+            <ChevronRight className="w-6 h-6 text-[#6C63FF]" />
+          </button>
         </div>
       </div>
     </section>
