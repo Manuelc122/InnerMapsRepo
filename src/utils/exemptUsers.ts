@@ -11,6 +11,7 @@ import { supabase } from './supabaseClient';
 export const EXEMPT_USERS: string[] = [
   'admin@innermaps.co',
   'test@innermaps.co',
+  'manueldavic@hotmail.com'
   // Add more exempt emails as needed
 ];
 

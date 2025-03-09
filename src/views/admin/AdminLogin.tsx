@@ -5,8 +5,8 @@ import { useAuth } from '../../state-management/AuthContext';
 // Admin-only emails that can access this page
 const ADMIN_EMAILS = ['admin@innermaps.co', 'test@innermaps.co', 'manueldavic@hotmail.com'];
 
-// TEMPORARY: Set this to true to bypass admin email check for testing
-const BYPASS_ADMIN_CHECK = true;
+// TEMPORARY: Set this to false for production deployment
+const BYPASS_ADMIN_CHECK = false;
 
 export default function AdminLogin() {
   const { user, loading, signInWithEmail, error: authError } = useAuth();

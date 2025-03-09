@@ -13,9 +13,9 @@ import {
 // Admin-only emails that can access this page
 const ADMIN_EMAILS = ['admin@innermaps.co', 'test@innermaps.co', 'manueldavic@hotmail.com'];
 
-// TEMPORARY: Set these to true to bypass authentication for testing
-const BYPASS_AUTH_FOR_TESTING = true;
-const BYPASS_ADMIN_CHECK = true;
+// TEMPORARY: Set these to false for production deployment
+const BYPASS_AUTH_FOR_TESTING = false;
+const BYPASS_ADMIN_CHECK = false;
 
 export const ExemptUsersAdmin: React.FC = () => {
   const { user, loading } = useAuth();
